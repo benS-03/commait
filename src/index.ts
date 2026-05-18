@@ -24,6 +24,7 @@ program.command("commit")
 
     const config = loadConfig();
     const diff: string = await getStagedDiff();
+    console.log("PROMPTTTTT:"+config?.prompt);
     let message: string = "";
     if (!config) {
         console.log("no config found");

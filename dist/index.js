@@ -24,6 +24,7 @@ program.command("commit")
     ;
     const config = (0, config_1.loadConfig)();
     const diff = await (0, git_1.getStagedDiff)();
+    console.log("PROMPTTTTT:" + config?.prompt);
     let message = "";
     if (!config) {
         console.log("no config found");
