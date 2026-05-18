@@ -19,7 +19,14 @@ function loadConfig() {
         return null;
     }
 }
-function saveConfig(config) {
+function saveConfig(provider, model, prompt) {
     fs_1.default.mkdirSync(path_1.default.dirname(exports.CONFIG_PATH), { recursive: true });
-    fs_1.default.writeFileSync(exports.CONFIG_PATH, JSON.stringify(config, null, 2));
+    // Manually build the config object instead of directly stringifying input
+    const configToSave = {
+        provider: provider,
+        model: model,
+        prompt: prompt,
+    };
+    const jsonString = JSON.stringify(configToSave, null, 2);
+    fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);
 }

@@ -11,12 +11,12 @@ const client = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY,
 });
 exports.openaiProvider = {
-    async generateCommitMessage(diff) {
+    async generateCommitMessage(diff, prompt) {
         const res = await client.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [{
                     role: "system",
-                    content: "You write concise git commit messages.",
+                    content: prompt,
                 },
                 {
                     role: "user",
@@ -31,14 +31,14 @@ const anthropic = new sdk_1.default({
     apiKey: process.env.ANTHROPIC_API_KEY,
 });
 exports.anthropicProvider = {
-    async generateCommitMessage(diff) {
+    async generateCommitMessage(diff, prompt) {
         const res = await anthropic.messages.create({
             model: "claude-sonnet-4-6",
             max_tokens: 200,
             messages: [
                 {
                     role: "user",
-                    content: `Write a git commit message for this diff: \n\n ${diff}`,
+                    content: `${prompt} \n\n ${diff}`,
                 },
             ],
         });

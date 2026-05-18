@@ -5,8 +5,8 @@ import fs from "fs";
 
 export type CommaitConfig = {
     provider: "openai" | "anthropic";
-    openaiModel?: string;
-    anthropicModel?: string;
+    model: string;
+    prompt: string;
 };
 
 
@@ -16,7 +16,7 @@ export const CONFIG_PATH = path.join(
     "config.json"
 );
 
-export function loadConfig() {
+export function loadConfig(): CommaitConfig | null{
     try {
         const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
         return JSON.parse(raw);
@@ -25,13 +25,19 @@ export function loadConfig() {
     }
 }
 
-export function saveConfig(config: any) {
-    fs.mkdirSync(path.dirname(CONFIG_PATH), {recursive: true});
+export function saveConfig(provider: string, model:string, prompt:string) {
+    fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
 
-    fs.writeFileSync(
-        CONFIG_PATH,
-        JSON.stringify(config, null, 2)
-    )
+    // Manually build the config object instead of directly stringifying input
+    const configToSave = {
+        provider: provider,
+        model: model,
+        prompt: prompt,
+    };
+
+    const jsonString = JSON.stringify(configToSave, null, 2);
+
+    fs.writeFileSync(CONFIG_PATH, jsonString);
 }
 
 

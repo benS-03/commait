@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk"
 require('dotenv').config();
 
 export interface AIProvider {
-    generateCommitMessage(diff: string): Promise<string>;
+    generateCommitMessage(diff: string, prompt: string): Promise<string>;
 }
 
 const client = new OpenAI({
@@ -12,12 +12,12 @@ const client = new OpenAI({
 
 
 export const openaiProvider: AIProvider = {
-    async generateCommitMessage(diff: string) {
+    async generateCommitMessage(diff: string, prompt: string) {
         const res = await client.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [ {
                 role:"system",
-                content: "You write concise git commit messages.",
+                content: prompt,
             },
             {
                 role: "user",
@@ -34,14 +34,14 @@ const anthropic = new Anthropic({
 });
 
 export const anthropicProvider: AIProvider = {
-    async generateCommitMessage(diff: string) {
+    async generateCommitMessage(diff: string, prompt: string) {
         const res = await anthropic.messages.create({
             model: "claude-sonnet-4-6",
             max_tokens: 200,
             messages: [
                 {
                     role: "user",
-                    content: `Write a git commit message for this diff: \n\n ${diff}`,
+                    content: `${prompt} \n\n ${diff}`,
                 },
             ],
         });

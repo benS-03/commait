@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getStagedDiff = getStagedDiff;
 exports.isGitRepo = isGitRepo;
 exports.getRepoName = getRepoName;
+exports.commmit = commmit;
+exports.pushChanges = pushChanges;
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const simple_git_1 = __importDefault(require("simple-git"));
@@ -48,5 +50,24 @@ function getRepoName() {
     }
     catch {
         return "unknown repo";
+    }
+}
+async function commmit(message) {
+    try {
+        await git.add(".");
+        await git.commit(message);
+        console.log("Commit seccessful");
+    }
+    catch (err) {
+        console.error("Commit failed");
+    }
+}
+async function pushChanges() {
+    try {
+        await git.push();
+        console.log("Push successful");
+    }
+    catch (err) {
+        console.error("Push Failed");
     }
 }

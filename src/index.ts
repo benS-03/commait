@@ -1,16 +1,57 @@
 #!/usr/bin/env node
 
-import { getStagedDiff, isGitRepo, getRepoName } from "./git";
+import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges } from "./git";
 import {openaiProvider, anthropicProvider} from "./ai"
-import {saveConfig, loadConfig} from "./config";
+import { CommaitConfig,saveConfig, loadConfig} from "./config";
 import { Command } from "commander";
 import inquirer from "inquirer";
+import { commitMessagePrompt } from "./prompt";
+import { push } from "node:stream/iter";
 
 const program = new Command();
 
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 
+program.command("commit")
+.description("Generate Message, commit locally, and optionally push changes")
+.action(async () => {
+    if (isGitRepo())
+        console.log("Current repo:" + getRepoName());
+    else {
+        console.log("Not in git repo");
+        process.exit(1);
+    };
 
+    const config = loadConfig();
+    const diff: string = await getStagedDiff();
+    let message: string = "";
+    if (!config) {
+        console.log("no config found");
+        return;
+    }
+    else if (config.provider == "anthropic"){
+        message = await anthropicProvider.generateCommitMessage(diff, config.prompt)
+    }
+    else {
+        //openai 
+        return;
+    }
+
+    commmit(message);
+
+    const cont = await inquirer.prompt([
+        {
+            type: "confirm",
+            name: "push confirm",
+            message: "Would you like to push changes? y/n"
+        }
+    ]);
+
+    if (cont){
+        pushChanges()
+    }
+
+})
 
 program.command("diff")
 .description("show staged git diff")
@@ -29,8 +70,6 @@ program.command("gen")
 .description("generate a commit message and print")
 .action(async () => {
     const diff = await getStagedDiff();
-    const message = await anthropicProvider.generateCommitMessage(diff);
-    console.log(message);
 })
 
 const config = program.command("config");
@@ -38,7 +77,6 @@ const config = program.command("config");
 config.command("init")
 .description("initialize commait config")
 .action(async () => {
-    console.log("inquirer import:", inquirer);
     const answers = await inquirer.prompt([
 
   {
@@ -64,9 +102,22 @@ config.command("init")
     ],
     when: (ans) => ans.provider === "anthropic",
   },
+  {
+    type: "input",
+    name: "prompt",
+    message: "Type a custom prompt here, leave blank for default."
+  },
 
 ]);
-saveConfig(answers);
+let prompt:string;
+if (answers.prompt == "") {
+    prompt = commitMessagePrompt;
+}
+else {
+    prompt = answers.prompt;
+}
+
+saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt );
 });
 
 config.command("get")

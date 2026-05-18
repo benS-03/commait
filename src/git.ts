@@ -51,3 +51,24 @@ export function getRepoName(): string{
 
 
 }
+
+export async function commmit(message: string){
+
+    try {
+        await git.add(".");
+        await git.commit(message);
+        console.log("Commit seccessful");
+    } catch (err) {
+        console.error("Commit failed");
+    }
+
+}
+
+export async function pushChanges() {
+    try {
+        await git.push();
+        console.log("Push successful");
+    } catch (err) {
+        console.error("Push Failed");
+    }
+}
