@@ -1,0 +1,31 @@
+{
+  "name": "commait",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benS-03/commait.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/benS-03/commait/issues"
+  },
+  "homepage": "https://github.com/benS-03/commait#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "typescript": "^6.0.3"
+  },
+  "bin": {
+    "commait": "./dist/index.js"
+  },
+  "dependencies": {
+    "simple-git": "^3.36.0"
+  }
+}
