@@ -1,0 +1,52 @@
+import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk"
+require('dotenv').config();
+
+export interface AIProvider {
+    generateCommitMessage(diff: string): Promise<string>;
+}
+
+const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
+
+export const openaiProvider: AIProvider = {
+    async generateCommitMessage(diff: string) {
+        const res = await client.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [ {
+                role:"system",
+                content: "You write concise git commit messages.",
+            },
+            {
+                role: "user",
+                content: diff,
+            },
+            ],
+        });
+        return res.choices[0].message.content ?? "";
+    }
+}
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+export const anthropicProvider: AIProvider = {
+    async generateCommitMessage(diff: string) {
+        const res = await anthropic.messages.create({
+            model: "claude-sonnet-4-6",
+            max_tokens: 200,
+            messages: [
+                {
+                    role: "user",
+                    content: `Write a git commit message for this diff: \n\n ${diff}`,
+                },
+            ],
+        });
+        return res.content
+        .filter((block) => block.type === "text")
+        .map((block) => block.text)
+        .join("");    },
+}

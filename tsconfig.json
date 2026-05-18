@@ -18,7 +18,9 @@
 
     "skipLibCheck": true,
 
-    "types": ["node"]
+    "types": ["node"],
+
+    "esModuleInterop": true
 
   },
 

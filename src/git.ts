@@ -7,7 +7,6 @@ export async function getStagedDiff() {
 
     try{
         const diff = await git.diff();
-        console.log(diff)
         return diff;
     } catch (err) {
         console.error("error getting diff")

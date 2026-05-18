@@ -13,7 +13,6 @@ const git = (0, simple_git_1.default)();
 async function getStagedDiff() {
     try {
         const diff = await git.diff();
-        console.log(diff);
         return diff;
     }
     catch (err) {
