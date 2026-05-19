@@ -6,9 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CONFIG_PATH = void 0;
 exports.loadConfig = loadConfig;
 exports.saveConfig = saveConfig;
+exports.configAutoInit = configAutoInit;
 const path_1 = __importDefault(require("path"));
 const os_1 = __importDefault(require("os"));
 const fs_1 = __importDefault(require("fs"));
+require('dotenv').config();
+const aiPrompt_1 = require("./aiPrompt");
 exports.CONFIG_PATH = path_1.default.join(os_1.default.homedir(), ".commait", "config.json");
 function loadConfig() {
     try {
@@ -29,4 +32,18 @@ function saveConfig(provider, model, prompt) {
     };
     const jsonString = JSON.stringify(configToSave, null, 2);
     fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);
+}
+function configAutoInit() {
+    let provider, model, prompt;
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (anthropicKey) {
+        saveConfig("anthropic", "claude-sonnet-4-6", aiPrompt_1.commitMessagePrompt);
+    }
+    else if (openaiKey) {
+        saveConfig("openai", "gpt-4o-mini", aiPrompt_1.commitMessagePrompt);
+    }
+    else {
+        saveConfig("none", "none", aiPrompt_1.commitMessagePrompt);
+    }
 }

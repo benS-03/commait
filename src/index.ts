@@ -2,11 +2,12 @@
 
 import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges } from "./git";
 import {openaiProvider, anthropicProvider} from "./ai"
-import { CommaitConfig,saveConfig, loadConfig} from "./config";
+import {  CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit} from "./config";
 import { Command } from "commander";
 import inquirer from "inquirer";
-import { commitMessagePrompt } from "./prompt";
+import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
+import {configInitPrompt} from "./commandPrompts"
 
 const program = new Command();
 
@@ -22,7 +23,12 @@ program.command("commit")
         process.exit(1);
     };
 
-    const config = loadConfig();
+    let config = loadConfig();
+
+    if ( config == null) {
+        configAutoInit();
+        config = loadConfig();
+    }
     const diff: string = await getStagedDiff();
     console.log("PROMPTTTTT:"+config?.prompt);
     let message: string = "";
@@ -78,38 +84,7 @@ const config = program.command("config");
 config.command("init")
 .description("initialize commait config")
 .action(async () => {
-    const answers = await inquirer.prompt([
-
-  {
-    type: "list",
-    name: "provider",
-    message: "Choose your AI provider:",
-    choices: ["openai", "anthropic"],
-  },
-  {
-    type: "list",
-    name: "openaiModel",
-    message: "Choose OpenAI model:",
-    choices: ["gpt-4o-mini", "gpt-4o"],
-    when: (ans) => ans.provider === "openai",
-  },
-  {
-    type: "list",
-    name: "anthropicModel",
-    message: "Choose Anthropic model:",
-    choices: [
-      "claude-sonnet-4-6",
-      "josh7",
-    ],
-    when: (ans) => ans.provider === "anthropic",
-  },
-  {
-    type: "input",
-    name: "prompt",
-    message: "Type a custom prompt here, leave blank for default."
-  },
-
-]);
+    const answers = await configInitPrompt();
 let prompt:string;
 if (answers.prompt == "") {
     prompt = commitMessagePrompt;
@@ -127,5 +102,11 @@ config.command("get")
     const config = await loadConfig();
     console.log(config);
 });
+
+config.command("loc")
+.description("Dispay path to config")
+.action(async () => {
+    console.log("Path to config: " + CONFIG_PATH);
+})
 
 program.parse();

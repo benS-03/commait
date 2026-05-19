@@ -9,7 +9,8 @@ const ai_1 = require("./ai");
 const config_1 = require("./config");
 const commander_1 = require("commander");
 const inquirer_1 = __importDefault(require("inquirer"));
-const prompt_1 = require("./prompt");
+const aiPrompt_1 = require("./aiPrompt");
+const commandPrompts_1 = require("./commandPrompts");
 const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 program.command("commit")
@@ -22,7 +23,11 @@ program.command("commit")
         process.exit(1);
     }
     ;
-    const config = (0, config_1.loadConfig)();
+    let config = (0, config_1.loadConfig)();
+    if (config == null) {
+        (0, config_1.configAutoInit)();
+        config = (0, config_1.loadConfig)();
+    }
     const diff = await (0, git_1.getStagedDiff)();
     console.log("PROMPTTTTT:" + config?.prompt);
     let message = "";
@@ -70,39 +75,10 @@ const config = program.command("config");
 config.command("init")
     .description("initialize commait config")
     .action(async () => {
-    const answers = await inquirer_1.default.prompt([
-        {
-            type: "list",
-            name: "provider",
-            message: "Choose your AI provider:",
-            choices: ["openai", "anthropic"],
-        },
-        {
-            type: "list",
-            name: "openaiModel",
-            message: "Choose OpenAI model:",
-            choices: ["gpt-4o-mini", "gpt-4o"],
-            when: (ans) => ans.provider === "openai",
-        },
-        {
-            type: "list",
-            name: "anthropicModel",
-            message: "Choose Anthropic model:",
-            choices: [
-                "claude-sonnet-4-6",
-                "josh7",
-            ],
-            when: (ans) => ans.provider === "anthropic",
-        },
-        {
-            type: "input",
-            name: "prompt",
-            message: "Type a custom prompt here, leave blank for default."
-        },
-    ]);
+    const answers = await (0, commandPrompts_1.configInitPrompt)();
     let prompt;
     if (answers.prompt == "") {
-        prompt = prompt_1.commitMessagePrompt;
+        prompt = aiPrompt_1.commitMessagePrompt;
     }
     else {
         prompt = answers.prompt;
@@ -114,5 +90,10 @@ config.command("get")
     .action(async () => {
     const config = await (0, config_1.loadConfig)();
     console.log(config);
+});
+config.command("loc")
+    .description("Dispay path to config")
+    .action(async () => {
+    console.log("Path to config: " + config_1.CONFIG_PATH);
 });
 program.parse();

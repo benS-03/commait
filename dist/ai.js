@@ -7,11 +7,21 @@ exports.anthropicProvider = exports.openaiProvider = void 0;
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 require('dotenv').config();
-const client = new openai_1.default({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAiClient() {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key)
+        throw new Error("No open AI key detected in env");
+    return new openai_1.default({ apiKey: key });
+}
+function getAnthropicClient() {
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key)
+        throw new Error("No anthropic key detected in env");
+    return new sdk_1.default({ apiKey: key });
+}
 exports.openaiProvider = {
     async generateCommitMessage(diff, prompt) {
+        const client = getOpenAiClient();
         const res = await client.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [{
@@ -27,12 +37,10 @@ exports.openaiProvider = {
         return res.choices[0].message.content ?? "";
     }
 };
-const anthropic = new sdk_1.default({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
 exports.anthropicProvider = {
     async generateCommitMessage(diff, prompt) {
-        const res = await anthropic.messages.create({
+        const client = getAnthropicClient();
+        const res = await client.messages.create({
             model: "claude-sonnet-4-6",
             max_tokens: 200,
             messages: [

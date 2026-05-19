@@ -6,13 +6,28 @@ export interface AIProvider {
     generateCommitMessage(diff: string, prompt: string): Promise<string>;
 }
 
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
+function getOpenAiClient(){
+    const key = process.env.OPENAI_API_KEY;
+
+    if (!key)
+        throw new Error("No open AI key detected in env");
+
+    return new OpenAI({apiKey: key});
+}
+
+function getAnthropicClient(){
+    const key = process.env.ANTHROPIC_API_KEY;
+
+    if (!key)
+        throw new Error("No anthropic key detected in env");
+
+    return new Anthropic({apiKey: key});
+}
 
 export const openaiProvider: AIProvider = {
     async generateCommitMessage(diff: string, prompt: string) {
+        const client = getOpenAiClient();
         const res = await client.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [ {
@@ -29,13 +44,11 @@ export const openaiProvider: AIProvider = {
     }
 }
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 export const anthropicProvider: AIProvider = {
     async generateCommitMessage(diff: string, prompt: string) {
-        const res = await anthropic.messages.create({
+        const client = getAnthropicClient();
+        const res = await client.messages.create({
             model: "claude-sonnet-4-6",
             max_tokens: 200,
             messages: [

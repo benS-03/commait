@@ -1,6 +1,8 @@
 import path from "path";
 import os from "os";
 import fs from "fs";
+require('dotenv').config();
+import {commitMessagePrompt} from "./aiPrompt"
 
 
 export type CommaitConfig = {
@@ -40,6 +42,22 @@ export function saveConfig(provider: string, model:string, prompt:string) {
     fs.writeFileSync(CONFIG_PATH, jsonString);
 }
 
+export function configAutoInit() {
+
+    let provider: string, model: string, prompt: string;
+
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if ( anthropicKey){
+        saveConfig("anthropic","claude-sonnet-4-6", commitMessagePrompt);
+    }
+    else if (openaiKey) {
+        saveConfig("openai", "gpt-4o-mini", commitMessagePrompt);
+    }
+    else {
+        saveConfig("none", "none", commitMessagePrompt);
+    }
+}
 
 
 
