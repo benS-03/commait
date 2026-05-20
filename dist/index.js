@@ -11,7 +11,8 @@ const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 program.command("commit")
     .description("Generate Message, commit locally, and optionally push changes")
-    .action(async () => {
+    .option('--dry-run', 'run without commit or pushing')
+    .action(async (options) => {
     if ((0, git_1.isGitRepo)())
         console.log("Current repo:" + (0, git_1.getRepoName)());
     else {
@@ -45,9 +46,13 @@ program.command("commit")
         else
             process.exit(1);
     }
-    (0, git_1.commmit)(message);
+    if (!options.dryRun) {
+        (0, git_1.commmit)(message);
+    }
     if (await (0, commandPrompts_1.confirmContinue)("Would you like to Push Changes? y/n")) {
-        (0, git_1.pushChanges)();
+        if (!options.dryRun) {
+            (0, git_1.pushChanges)();
+        }
     }
 });
 const config = program.command("config");

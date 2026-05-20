@@ -15,7 +15,8 @@ program.name("commait").description("AI-powered commit message generator").versi
 
 program.command("commit")
 .description("Generate Message, commit locally, and optionally push changes")
-.action(async () => {
+.option('--dry-run', 'run without commit or pushing')
+.action(async (options) => {
 
     if (isGitRepo())
         console.log("Current repo:" + getRepoName());
@@ -53,10 +54,14 @@ program.command("commit")
             process.exit(1);
 
     }
-    commmit(message);
+    if (!options.dryRun){
+        commmit(message);
+    }
 
     if (await confirmContinue("Would you like to Push Changes? y/n")){
-        pushChanges();
+        if (!options.dryRun){
+            pushChanges();
+        }
     }
 
 })
