@@ -19,7 +19,9 @@ function loadConfig() {
         return JSON.parse(raw);
     }
     catch {
-        return null;
+        configAutoInit();
+        const raw = fs_1.default.readFileSync(exports.CONFIG_PATH, "utf-8");
+        return JSON.parse(raw);
     }
 }
 function saveConfig(provider, model, prompt) {

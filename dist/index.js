@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const git_1 = require("./git");
 const ai_1 = require("./ai");
 const config_1 = require("./config");
 const commander_1 = require("commander");
-const inquirer_1 = __importDefault(require("inquirer"));
 const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
 const program = new commander_1.Command();
@@ -23,53 +19,36 @@ program.command("commit")
         process.exit(1);
     }
     ;
-    let config = (0, config_1.loadConfig)();
-    if (config == null) {
-        (0, config_1.configAutoInit)();
-        config = (0, config_1.loadConfig)();
-    }
+    const config = (0, config_1.loadConfig)();
     const diff = await (0, git_1.getStagedDiff)();
-    console.log("PROMPTTTTT:" + config?.prompt);
     let message = "";
-    if (!config) {
-        console.log("no config found");
-        return;
-    }
-    else if (config.provider == "anthropic") {
-        message = await ai_1.anthropicProvider.generateCommitMessage(diff, config.prompt);
-    }
-    else {
-        //openai 
-        return;
+    let cont = true;
+    while (cont) {
+        if (config.provider == "anthropic") {
+            message = await ai_1.anthropicProvider.generateCommitMessage(diff, config.prompt);
+        }
+        else if (config.provider == "openai") {
+            //openai 
+            return;
+        }
+        else {
+            console.log("Unsupported Provdier, try \"commait config init\"");
+            return;
+        }
+        console.log("===========COMMIT MESSAGE===========");
+        console.log(message);
+        const answer = await (0, commandPrompts_1.confirmCommit)();
+        if (answer.commitConfirm == 'y')
+            cont = false;
+        else if (answer.commitConfirm == 'r')
+            cont = true;
+        else
+            process.exit(1);
     }
     (0, git_1.commmit)(message);
-    const cont = await inquirer_1.default.prompt([
-        {
-            type: "confirm",
-            name: "push confirm",
-            message: "Would you like to push changes? y/n"
-        }
-    ]);
-    if (cont) {
+    if (await (0, commandPrompts_1.confirmContinue)("Would you like to Push Changes? y/n")) {
         (0, git_1.pushChanges)();
     }
-});
-program.command("diff")
-    .description("show staged git diff")
-    .action(async () => {
-    if ((0, git_1.isGitRepo)())
-        console.log("Current repo:" + (0, git_1.getRepoName)());
-    else {
-        console.log("Not in git repo");
-        process.exit(1);
-    }
-    const diff = await (0, git_1.getStagedDiff)();
-    console.log(diff);
-});
-program.command("gen")
-    .description("generate a commit message and print")
-    .action(async () => {
-    const diff = await (0, git_1.getStagedDiff)();
 });
 const config = program.command("config");
 config.command("init")

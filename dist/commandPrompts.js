@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.configInitPrompt = configInitPrompt;
+exports.confirmCommit = confirmCommit;
+exports.confirmContinue = confirmContinue;
 const inquirer_1 = __importDefault(require("inquirer"));
 async function configInitPrompt() {
     const answers = await inquirer_1.default.prompt([
@@ -37,4 +39,30 @@ async function configInitPrompt() {
         },
     ]);
     return answers;
+}
+async function confirmCommit() {
+    const answer = await inquirer_1.default.prompt([
+        {
+            type: 'list',
+            name: 'commitConfirm',
+            message: 'Use this commit?',
+            choices: [
+                { name: 'Yes', value: 'y' },
+                { name: 'No', value: 'n' },
+                { name: 'Regenerate', value: 'r' },
+            ],
+        },
+    ]);
+    return answer;
+}
+async function confirmContinue(message = "Continue?") {
+    const { confirm } = await inquirer_1.default.prompt([
+        {
+            type: "confirm",
+            name: "confirm",
+            message,
+            default: false,
+        },
+    ]);
+    return confirm;
 }

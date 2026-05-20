@@ -18,12 +18,14 @@ export const CONFIG_PATH = path.join(
     "config.json"
 );
 
-export function loadConfig(): CommaitConfig | null{
+export function loadConfig(): CommaitConfig{
     try {
         const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
         return JSON.parse(raw);
     } catch {
-        return null;
+        configAutoInit();
+        const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
+        return JSON.parse(raw);
     }
 }
 

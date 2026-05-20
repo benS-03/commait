@@ -7,7 +7,7 @@ import { Command } from "commander";
 import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
-import {configInitPrompt} from "./commandPrompts"
+import {configInitPrompt, confirmContinue, confirmCommit} from "./commandPrompts"
 
 const program = new Command();
 
@@ -16,6 +16,7 @@ program.name("commait").description("AI-powered commit message generator").versi
 program.command("commit")
 .description("Generate Message, commit locally, and optionally push changes")
 .action(async () => {
+
     if (isGitRepo())
         console.log("Current repo:" + getRepoName());
     else {
@@ -23,60 +24,41 @@ program.command("commit")
         process.exit(1);
     };
 
-    let config = loadConfig();
-
-    if ( config == null) {
-        configAutoInit();
-        config = loadConfig();
-    }
+    const config = loadConfig();
     const diff: string = await getStagedDiff();
-    console.log("PROMPTTTTT:"+config?.prompt);
     let message: string = "";
-    if (!config) {
-        console.log("no config found");
-        return;
-    }
-    else if (config.provider == "anthropic"){
-        message = await anthropicProvider.generateCommitMessage(diff, config.prompt)
-    }
-    else {
-        //openai 
-        return;
-    }
+    let cont: boolean= true;
+    while(cont) {
+        if (config.provider == "anthropic"){
+            message = await anthropicProvider.generateCommitMessage(diff, config.prompt)
+        }
+        else if (config.provider == "openai"){
+            //openai 
+            return;
+        }
+        else {
+            console.log("Unsupported Provdier, try \"commait config init\"")
+            return;
+        }
+        console.log("===========COMMIT MESSAGE===========");
+        console.log(message)
 
+        const answer = await confirmCommit();
+
+        if (answer.commitConfirm == 'y')
+            cont = false;
+        else if (answer.commitConfirm == 'r')
+            cont = true;
+        else
+            process.exit(1);
+
+    }
     commmit(message);
 
-    const cont = await inquirer.prompt([
-        {
-            type: "confirm",
-            name: "push confirm",
-            message: "Would you like to push changes? y/n"
-        }
-    ]);
-
-    if (cont){
-        pushChanges()
+    if (await confirmContinue("Would you like to Push Changes? y/n")){
+        pushChanges();
     }
 
-})
-
-program.command("diff")
-.description("show staged git diff")
-.action(async () => {
-    if (isGitRepo())
-    console.log("Current repo:" + getRepoName());
-else {
-    console.log("Not in git repo");
-    process.exit(1);
-}
-    const diff = await getStagedDiff();
-    console.log(diff);
-});
-
-program.command("gen")
-.description("generate a commit message and print")
-.action(async () => {
-    const diff = await getStagedDiff();
 })
 
 const config = program.command("config");

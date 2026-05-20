@@ -36,3 +36,33 @@ export async function configInitPrompt(){
 
     return answers;
 }
+
+export async function confirmCommit(){
+    const answer = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'commitConfirm',
+            message: 'Use this commit?',
+            choices: [
+                {name: 'Yes', value: 'y'},
+                {name: 'No', value: 'n'},
+                {name: 'Regenerate', value: 'r'},
+            ],
+        },
+    ]);
+
+    return answer;
+}
+
+export async function confirmContinue(message = "Continue?") {
+    const { confirm } = await inquirer.prompt([
+        {
+            type: "confirm",
+            name: "confirm",
+            message,
+            default: false,
+        },
+    ]);
+
+    return confirm;
+}
