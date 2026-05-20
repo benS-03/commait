@@ -7,11 +7,13 @@ const config_1 = require("./config");
 const commander_1 = require("commander");
 const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
+const external_editor_1 = require("external-editor");
 const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 program.command("commit")
     .description("Generate Message, commit locally, and optionally push changes")
     .option('--dry-run', 'run without commit or pushing')
+    .option('-e, --edit', 'edit message before commit')
     .action(async (options) => {
     if ((0, git_1.isGitRepo)())
         console.log("Current repo:" + (0, git_1.getRepoName)());
@@ -45,6 +47,9 @@ program.command("commit")
             cont = true;
         else
             process.exit(1);
+    }
+    if (options.edit) {
+        message = (0, external_editor_1.edit)(message);
     }
     if (!options.dryRun) {
         (0, git_1.commmit)(message);

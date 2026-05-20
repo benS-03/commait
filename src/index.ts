@@ -7,7 +7,9 @@ import { Command } from "commander";
 import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
-import {configInitPrompt, confirmContinue, confirmCommit} from "./commandPrompts"
+import {configInitPrompt, confirmContinue, confirmCommit} from "./commandPrompts";
+import {edit} from "external-editor";
+
 
 const program = new Command();
 
@@ -16,6 +18,7 @@ program.name("commait").description("AI-powered commit message generator").versi
 program.command("commit")
 .description("Generate Message, commit locally, and optionally push changes")
 .option('--dry-run', 'run without commit or pushing')
+.option('-e, --edit', 'edit message before commit')
 .action(async (options) => {
 
     if (isGitRepo())
@@ -53,6 +56,9 @@ program.command("commit")
         else
             process.exit(1);
 
+    }
+    if(options.edit){
+        message = edit(message);
     }
     if (!options.dryRun){
         commmit(message);
