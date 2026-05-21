@@ -1,5 +1,5 @@
 import inquirer from "inquirer";
-
+import {MODEL_REGISTRY, DEFAULT_MODELS} from "./ai"
 export async function configInitPrompt(){
     const answers = await inquirer.prompt([
     
@@ -13,17 +13,14 @@ export async function configInitPrompt(){
         type: "list",
         name: "openaiModel",
         message: "Choose OpenAI model:",
-        choices: ["gpt-4o-mini", "gpt-4o"],
+        choices: MODEL_REGISTRY.openai,
         when: (ans) => ans.provider === "openai",
       },
       {
         type: "list",
         name: "anthropicModel",
         message: "Choose Anthropic model:",
-        choices: [
-          "claude-sonnet-4-6",
-          "josh7",
-        ],
+        choices: MODEL_REGISTRY.anthropic,
         when: (ans) => ans.provider === "anthropic",
       },
       {

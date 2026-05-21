@@ -70,6 +70,13 @@ program.command("commit")
 
 })
 
+program.command("push")
+.description("Standalone push command")
+.action(async() => {
+    console.log("Pushing Changes");
+    pushChanges();
+})
+
 const config = program.command("config");
 
 config.command("init")

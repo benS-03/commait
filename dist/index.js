@@ -55,6 +55,12 @@ program.command("commit")
     console.log("===========TOKEN USAGE===========");
     console.log(`Total input token usage: ${tokens}`);
 });
+program.command("push")
+    .description("Standalone push command")
+    .action(async () => {
+    console.log("Pushing Changes");
+    (0, git_1.pushChanges)();
+});
 const config = program.command("config");
 config.command("init")
     .description("initialize commait config")

@@ -3,12 +3,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AnthropicProvider = exports.OpenAIProvider = void 0;
+exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = exports.MODEL_REGISTRY = void 0;
 exports.getProvider = getProvider;
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 require('dotenv').config();
 const tiktoken_1 = require("tiktoken");
+exports.MODEL_REGISTRY = {
+    openai: [
+        "gpt-4.1-nano", // Ultra fast/cheap option
+        "gpt-4.1-mini", //Fast, cheap, suprisingly strong for coding. Good default
+        "gpt-4.1", //Best general purpose, good reasoning, more expoensive and slow
+        "gpt-5.1", // High-end reasoning, explain deeply
+        "gpt-5.2" // frontier model, best overall quality, most expensive
+    ],
+    anthropic: [
+        "claude-haiku-4-5-20251001", // Fast Cheap
+        "claude-sonnet-4-6", //Best balance, strong quality. Good defaut
+        "claude-opus-4-7" //Highest Quality reasoning model. Expensive
+    ]
+};
+exports.DEFAULT_MODELS = {
+    openai: "gpt-4.1-mini",
+    anthropic: "claude-sonnet-4-6"
+};
 class OpenAIProvider {
     constructor(config) {
         this.model = "gpt-4o-mini";

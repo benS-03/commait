@@ -4,6 +4,26 @@ require('dotenv').config();
 import { encoding_for_model } from "tiktoken";
 import {loadConfig, CommaitConfig } from "./config";
 
+
+export const MODEL_REGISTRY = {
+    openai: [
+        "gpt-4.1-nano", // Ultra fast/cheap option
+        "gpt-4.1-mini", //Fast, cheap, suprisingly strong for coding. Good default
+        "gpt-4.1", //Best general purpose, good reasoning, more expoensive and slow
+        "gpt-5.1", // High-end reasoning, explain deeply
+        "gpt-5.2" // frontier model, best overall quality, most expensive
+    ],
+    anthropic: [
+        "claude-haiku-4-5-20251001", // Fast Cheap
+        "claude-sonnet-4-6", //Best balance, strong quality. Good defaut
+        "claude-opus-4-7" //Highest Quality reasoning model. Expensive
+    ]
+} as const;
+
+export const DEFAULT_MODELS = {
+    openai: "gpt-4.1-mini",
+    anthropic: "claude-sonnet-4-6"
+} as const;
 export interface AIProvider {
     generateCommitMessage(diff: string): Promise<string>;
     countInputTokens(diff: string): Promise<number>;

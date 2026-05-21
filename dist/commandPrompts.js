@@ -7,6 +7,7 @@ exports.configInitPrompt = configInitPrompt;
 exports.confirmCommit = confirmCommit;
 exports.confirmContinue = confirmContinue;
 const inquirer_1 = __importDefault(require("inquirer"));
+const ai_1 = require("./ai");
 async function configInitPrompt() {
     const answers = await inquirer_1.default.prompt([
         {
@@ -19,17 +20,14 @@ async function configInitPrompt() {
             type: "list",
             name: "openaiModel",
             message: "Choose OpenAI model:",
-            choices: ["gpt-4o-mini", "gpt-4o"],
+            choices: ai_1.MODEL_REGISTRY.openai,
             when: (ans) => ans.provider === "openai",
         },
         {
             type: "list",
             name: "anthropicModel",
             message: "Choose Anthropic model:",
-            choices: [
-                "claude-sonnet-4-6",
-                "josh7",
-            ],
+            choices: ai_1.MODEL_REGISTRY.anthropic,
             when: (ans) => ans.provider === "anthropic",
         },
         {

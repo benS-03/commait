@@ -12,6 +12,7 @@ const os_1 = __importDefault(require("os"));
 const fs_1 = __importDefault(require("fs"));
 require('dotenv').config();
 const aiPrompt_1 = require("./aiPrompt");
+const ai_1 = require("./ai");
 exports.CONFIG_PATH = path_1.default.join(os_1.default.homedir(), ".commait", "config.json");
 function loadConfig() {
     try {
@@ -40,10 +41,10 @@ function configAutoInit() {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
     if (anthropicKey) {
-        saveConfig("anthropic", "claude-sonnet-4-6", aiPrompt_1.commitMessagePrompt);
+        saveConfig("anthropic", ai_1.DEFAULT_MODELS.anthropic, aiPrompt_1.commitMessagePrompt);
     }
     else if (openaiKey) {
-        saveConfig("openai", "gpt-4o-mini", aiPrompt_1.commitMessagePrompt);
+        saveConfig("openai", ai_1.DEFAULT_MODELS.openai, aiPrompt_1.commitMessagePrompt);
     }
     else {
         saveConfig("none", "none", aiPrompt_1.commitMessagePrompt);

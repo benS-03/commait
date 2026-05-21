@@ -3,7 +3,7 @@ import os from "os";
 import fs from "fs";
 require('dotenv').config();
 import {commitMessagePrompt} from "./aiPrompt"
-
+import {DEFAULT_MODELS} from "./ai"
 
 export type CommaitConfig = {
     provider: "openai" | "anthropic";
@@ -51,10 +51,10 @@ export function configAutoInit() {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
     if ( anthropicKey){
-        saveConfig("anthropic","claude-sonnet-4-6", commitMessagePrompt);
+        saveConfig("anthropic",DEFAULT_MODELS.anthropic, commitMessagePrompt);
     }
     else if (openaiKey) {
-        saveConfig("openai", "gpt-4o-mini", commitMessagePrompt);
+        saveConfig("openai", DEFAULT_MODELS.openai, commitMessagePrompt);
     }
     else {
         saveConfig("none", "none", commitMessagePrompt);
