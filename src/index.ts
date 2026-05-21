@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges } from "./git";
-import {openaiProvider, anthropicProvider} from "./ai"
+import {getProvider,AIProvider ,OpenAIProvider, AnthropicProvider} from "./ai"
 import {  CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit} from "./config";
 import { Command } from "commander";
 import inquirer from "inquirer";
@@ -31,19 +31,13 @@ program.command("commit")
     const config = loadConfig();
     const diff: string = await getStagedDiff();
     let message: string = "";
+    let tokens: number = 0;
     let cont: boolean= true;
+    const provider: AIProvider= getProvider(config);
+
     while(cont) {
-        if (config.provider == "anthropic"){
-            message = await anthropicProvider.generateCommitMessage(diff, config.prompt)
-        }
-        else if (config.provider == "openai"){
-            //openai 
-            return;
-        }
-        else {
-            console.log("Unsupported Provdier, try \"commait config init\"")
-            return;
-        }
+        message = await provider.generateCommitMessage(diff);
+        tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message)
 
@@ -69,6 +63,10 @@ program.command("commit")
             pushChanges();
         }
     }
+
+    console.log("===========TOKEN USAGE===========");
+    console.log(`Total input token usage: ${tokens}`);
+
 
 })
 

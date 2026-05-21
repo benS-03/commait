@@ -25,19 +25,12 @@ program.command("commit")
     const config = (0, config_1.loadConfig)();
     const diff = await (0, git_1.getStagedDiff)();
     let message = "";
+    let tokens = 0;
     let cont = true;
+    const provider = (0, ai_1.getProvider)(config);
     while (cont) {
-        if (config.provider == "anthropic") {
-            message = await ai_1.anthropicProvider.generateCommitMessage(diff, config.prompt);
-        }
-        else if (config.provider == "openai") {
-            //openai 
-            return;
-        }
-        else {
-            console.log("Unsupported Provdier, try \"commait config init\"");
-            return;
-        }
+        message = await provider.generateCommitMessage(diff);
+        tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message);
         const answer = await (0, commandPrompts_1.confirmCommit)();
@@ -59,6 +52,8 @@ program.command("commit")
             (0, git_1.pushChanges)();
         }
     }
+    console.log("===========TOKEN USAGE===========");
+    console.log(`Total input token usage: ${tokens}`);
 });
 const config = program.command("config");
 config.command("init")

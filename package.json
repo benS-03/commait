@@ -33,6 +33,7 @@
     "external-editor": "^3.1.0",
     "inquirer": "^8.2.7",
     "openai": "^6.38.0",
-    "simple-git": "^3.36.0"
+    "simple-git": "^3.36.0",
+    "tiktoken": "^1.0.22"
   }
 }

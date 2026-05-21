@@ -1,38 +1,38 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk"
 require('dotenv').config();
+import { encoding_for_model } from "tiktoken";
+import {loadConfig, CommaitConfig } from "./config";
 
 export interface AIProvider {
-    generateCommitMessage(diff: string, prompt: string): Promise<string>;
+    generateCommitMessage(diff: string): Promise<string>;
+    countInputTokens(diff: string): Promise<number>;
 }
 
+export class OpenAIProvider implements AIProvider {
+    private client: OpenAI;
+    private model: string = "gpt-4o-mini";
+    private prompt:string;
 
-function getOpenAiClient(){
-    const key = process.env.OPENAI_API_KEY;
+    constructor(config: CommaitConfig) {
+        const key = process.env.OPENAI_API_KEY;
 
-    if (!key)
-        throw new Error("No open AI key detected in env");
+        if (!key) {
+            throw new Error("Missing openai Key");
+        }
 
-    return new OpenAI({apiKey: key});
-}
+        this.client = new OpenAI({apiKey: key});
 
-function getAnthropicClient(){
-    const key = process.env.ANTHROPIC_API_KEY;
+        this.model = config.model;
+        this.prompt = config.prompt;
+    }
 
-    if (!key)
-        throw new Error("No anthropic key detected in env");
-
-    return new Anthropic({apiKey: key});
-}
-
-export const openaiProvider: AIProvider = {
-    async generateCommitMessage(diff: string, prompt: string) {
-        const client = getOpenAiClient();
-        const res = await client.chat.completions.create({
-            model: "gpt-4o-mini",
+    async generateCommitMessage(diff: string): Promise<string> {
+         const res = await this.client.chat.completions.create({
+            model: this.model,
             messages: [ {
                 role:"system",
-                content: prompt,
+                content: this.prompt,
             },
             {
                 role: "user",
@@ -42,24 +42,72 @@ export const openaiProvider: AIProvider = {
         });
         return res.choices[0].message.content ?? "";
     }
+
+    async countInputTokens(diff: string): Promise<number> {
+        
+        const enc = encoding_for_model(this.model as any);
+        const sysTokens = enc.encode(this.prompt).length;
+        const diffTokens = enc.encode(diff).length;
+
+        enc.free();
+        return sysTokens + diffTokens;
+    }
 }
 
+export class AnthropicProvider implements AIProvider {
+    private client: Anthropic;
+    private model: string;
+    private prompt:string;
+    constructor(config: CommaitConfig) {
+        const key = process.env.ANTHROPIC_API_KEY;
 
-export const anthropicProvider: AIProvider = {
-    async generateCommitMessage(diff: string, prompt: string) {
-        const client = getAnthropicClient();
-        const res = await client.messages.create({
-            model: "claude-sonnet-4-6",
+        if (!key) {
+            throw new Error("Missing anthropic Key");
+        }
+
+        this.client = new Anthropic({apiKey: key});;
+
+        this.model = config.model;
+        this.prompt = config.prompt;
+    }
+
+    async generateCommitMessage(diff: string): Promise<string> {
+        const res = await this.client.messages.create({
+            model: this.model,
             max_tokens: 200,
             messages: [
                 {
                     role: "user",
-                    content: `${prompt} \n\n ${diff}`,
+                    content: `${this.prompt} \n\n ${diff}`,
                 },
             ],
         });
         return res.content
         .filter((block) => block.type === "text")
         .map((block) => block.text)
-        .join("");    },
+        .join("");   
+    }
+
+    async countInputTokens(diff: string): Promise<number> {
+        const res = await this.client.messages.countTokens({
+            model: this.model,
+            system: this.prompt,
+            messages: [{role: "user", content: diff}]
+        })
+
+        return res.input_tokens;
+    }
+}
+
+
+export function getProvider(config: CommaitConfig): AIProvider {
+    switch (config.provider) {
+        case "anthropic":
+            return new AnthropicProvider(config);
+        case "openai":
+            return new OpenAIProvider(config);
+        default:
+            throw new Error("Unsupported provider");
+    
+    }
 }
