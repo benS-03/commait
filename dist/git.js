@@ -61,6 +61,7 @@ async function commmit(message) {
     catch (err) {
         console.error("Commit failed");
         console.log(err);
+        //comment just to make diff not empty
     }
 }
 async function pushChanges() {
