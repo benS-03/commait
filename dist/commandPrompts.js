@@ -35,6 +35,24 @@ async function configInitPrompt() {
             name: "prompt",
             message: "Type a custom prompt here, leave blank for default."
         },
+        {
+            type: "list",
+            name: "autoCommit",
+            message: "Commit without confirmation?",
+            choices: [
+                { name: "Auto Commit Enabled", value: true },
+                { name: "Auto Commit Disabled", value: false }
+            ]
+        },
+        {
+            type: "list",
+            name: "autoPush",
+            message: "Push without confirmation?",
+            choices: [
+                { name: "Auto Push Enabled", value: true },
+                { name: "Auto Push Disabled", value: false }
+            ]
+        }
     ]);
     return answers;
 }

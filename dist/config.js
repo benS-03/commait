@@ -25,13 +25,15 @@ function loadConfig() {
         return JSON.parse(raw);
     }
 }
-function saveConfig(provider, model, prompt) {
+function saveConfig(provider, model, prompt, autoCommit = false, autoPush = false) {
     fs_1.default.mkdirSync(path_1.default.dirname(exports.CONFIG_PATH), { recursive: true });
     // Manually build the config object instead of directly stringifying input
     const configToSave = {
         provider: provider,
         model: model,
         prompt: prompt,
+        auto_commit: autoCommit,
+        auto_push: autoPush
     };
     const jsonString = JSON.stringify(configToSave, null, 2);
     fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);

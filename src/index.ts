@@ -41,6 +41,11 @@ program.command("commit")
         console.log("===========COMMIT MESSAGE===========");
         console.log(message)
 
+        if (config.auto_commit) {
+            commmit(message);
+            break;
+        }
+
         const answer = await confirmCommit();
 
         if (answer.commitConfirm == 'y')
@@ -57,8 +62,10 @@ program.command("commit")
     if (!options.dryRun){
         commmit(message);
     }
-
-    if (await confirmContinue("Would you like to Push Changes? y/n")){
+    if (config.auto_push) {
+        pushChanges();
+    }
+    else if (await confirmContinue("Would you like to Push Changes? y/n")){
         if (!options.dryRun){
             pushChanges();
         }
@@ -91,7 +98,7 @@ else {
     prompt = answers.prompt;
 }
 
-saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt );
+saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers. autoPush);
 });
 
 config.command("get")

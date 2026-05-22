@@ -33,6 +33,10 @@ program.command("commit")
         tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message);
+        if (config.auto_commit) {
+            (0, git_1.commmit)(message);
+            break;
+        }
         const answer = await (0, commandPrompts_1.confirmCommit)();
         if (answer.commitConfirm == 'y')
             cont = false;
@@ -47,7 +51,10 @@ program.command("commit")
     if (!options.dryRun) {
         (0, git_1.commmit)(message);
     }
-    if (await (0, commandPrompts_1.confirmContinue)("Would you like to Push Changes? y/n")) {
+    if (config.auto_push) {
+        (0, git_1.pushChanges)();
+    }
+    else if (await (0, commandPrompts_1.confirmContinue)("Would you like to Push Changes? y/n")) {
         if (!options.dryRun) {
             (0, git_1.pushChanges)();
         }
@@ -73,7 +80,7 @@ config.command("init")
     else {
         prompt = answers.prompt;
     }
-    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt);
+    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush);
 });
 config.command("get")
     .description("Display current config")

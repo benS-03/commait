@@ -9,6 +9,8 @@ export type CommaitConfig = {
     provider: "openai" | "anthropic";
     model: string;
     prompt: string;
+    auto_commit: boolean;
+    auto_push: boolean;
 };
 
 
@@ -29,7 +31,7 @@ export function loadConfig(): CommaitConfig{
     }
 }
 
-export function saveConfig(provider: string, model:string, prompt:string) {
+export function saveConfig(provider: string, model:string, prompt:string, autoCommit: boolean = false, autoPush: boolean = false) {
     fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
 
     // Manually build the config object instead of directly stringifying input
@@ -37,6 +39,8 @@ export function saveConfig(provider: string, model:string, prompt:string) {
         provider: provider,
         model: model,
         prompt: prompt,
+        auto_commit: autoCommit,
+        auto_push: autoPush
     };
 
     const jsonString = JSON.stringify(configToSave, null, 2);
