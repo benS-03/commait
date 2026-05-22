@@ -60,6 +60,7 @@ async function commmit(message) {
     }
     catch (err) {
         console.error("Commit failed");
+        console.log(err);
     }
 }
 async function pushChanges() {

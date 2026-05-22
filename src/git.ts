@@ -60,6 +60,7 @@ export async function commmit(message: string){
         console.log("Commit seccessful");
     } catch (err) {
         console.error("Commit failed");
+        console.log(err);
     }
 
 }
