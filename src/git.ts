@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import path from "path";
 import simpleGit from "simple-git";
-const git = simpleGit();
+export const git = simpleGit();
 
 export async function getStagedDiff() {
 
@@ -69,6 +69,37 @@ export async function commmit(message: string){
     process.exit(1)
     }
 
+}
+
+export async function commitWithRetry(
+  git: any, 
+  message: string, 
+  retries = 3,
+  delayMs = 500
+): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await git.commit(message)
+      return // success
+    } catch (err: any) {
+      const isLock = err.message.includes('index.lock') && err.message.includes('File exists')
+      
+      if (isLock && attempt < retries) {
+        console.log(`⟳ Git locked, retrying (${attempt}/${retries})...`)
+        await new Promise(res => setTimeout(res, delayMs))
+        continue
+      }
+
+      // not a lock error, or out of retries
+      if (isLock) {
+        console.error('✖ Git is locked by another process.')
+        console.error('  Fix it by running: rm .git/index.lock')
+      } else {
+        console.error('✖ Git error:', err.message)
+      }
+      process.exit(1)
+    }
+  }
 }
 
 export async function pushChanges() {

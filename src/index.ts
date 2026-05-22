@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges } from "./git";
+import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges, commitWithRetry, git } from "./git";
 import {getProvider,AIProvider ,OpenAIProvider, AnthropicProvider} from "./ai"
 import {  CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit} from "./config";
 import { Command } from "commander";
@@ -42,7 +42,7 @@ program.command("commit")
         console.log(message)
 
         if (config.auto_commit) {
-            commmit(message);
+            await commitWithRetry(git, message);
             break;
         }
 
@@ -60,7 +60,7 @@ program.command("commit")
         message = edit(message);
     }
     if (!options.dryRun){
-        commmit(message);
+        commitWithRetry(git, message);
     }
     if (config.auto_push) {
         pushChanges();

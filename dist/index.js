@@ -34,7 +34,7 @@ program.command("commit")
         console.log("===========COMMIT MESSAGE===========");
         console.log(message);
         if (config.auto_commit) {
-            (0, git_1.commmit)(message);
+            await (0, git_1.commitWithRetry)(git_1.git, message);
             break;
         }
         const answer = await (0, commandPrompts_1.confirmCommit)();
@@ -49,7 +49,7 @@ program.command("commit")
         message = (0, external_editor_1.edit)(message);
     }
     if (!options.dryRun) {
-        (0, git_1.commmit)(message);
+        (0, git_1.commitWithRetry)(git_1.git, message);
     }
     if (config.auto_push) {
         (0, git_1.pushChanges)();

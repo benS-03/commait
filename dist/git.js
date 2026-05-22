@@ -3,18 +3,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.git = void 0;
 exports.getStagedDiff = getStagedDiff;
 exports.isGitRepo = isGitRepo;
 exports.getRepoName = getRepoName;
 exports.commmit = commmit;
+exports.commitWithRetry = commitWithRetry;
 exports.pushChanges = pushChanges;
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const simple_git_1 = __importDefault(require("simple-git"));
-const git = (0, simple_git_1.default)();
+exports.git = (0, simple_git_1.default)();
 async function getStagedDiff() {
     try {
-        const diff = await git.diff(['--staged']);
+        const diff = await exports.git.diff(['--staged']);
         return diff;
     }
     catch (err) {
@@ -54,7 +56,7 @@ function getRepoName() {
 }
 async function commmit(message) {
     try {
-        await git.commit(message);
+        await exports.git.commit(message);
         console.log("Commit seccessful");
     }
     catch (err) {
@@ -69,9 +71,34 @@ async function commmit(message) {
         process.exit(1);
     }
 }
+async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            await git.commit(message);
+            return; // success
+        }
+        catch (err) {
+            const isLock = err.message.includes('index.lock') && err.message.includes('File exists');
+            if (isLock && attempt < retries) {
+                console.log(`⟳ Git locked, retrying (${attempt}/${retries})...`);
+                await new Promise(res => setTimeout(res, delayMs));
+                continue;
+            }
+            // not a lock error, or out of retries
+            if (isLock) {
+                console.error('✖ Git is locked by another process.');
+                console.error('  Fix it by running: rm .git/index.lock');
+            }
+            else {
+                console.error('✖ Git error:', err.message);
+            }
+            process.exit(1);
+        }
+    }
+}
 async function pushChanges() {
     try {
-        await git.push();
+        await exports.git.push();
         console.log("Push successful");
     }
     catch (err) {
