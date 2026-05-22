@@ -6,7 +6,7 @@ const git = simpleGit();
 export async function getStagedDiff() {
 
     try{
-        const diff = await git.diff();
+        const diff = await git.diff(['--staged']);
         return diff;
     } catch (err) {
         console.error("error getting diff")
@@ -55,13 +55,18 @@ export function getRepoName(): string{
 export async function commmit(message: string){
 
     try {
-        await git.add(".");
         await git.commit(message);
         console.log("Commit seccessful");
-    } catch (err) {
-        console.error("Commit failed");
-        console.log(err);
-        //comment just to make diff not empty
+    } catch (err: any) {
+        console.error('RAW ERROR:', err.message);
+    if (err.message.includes('index.lock')) {
+        console.error('✖ Git is locked by another process.')
+        console.error('  Fix it by running: rm .git/index.lock')
+        process.exit(1)
+    }
+    // handle other errors
+    console.error('✖ Git error:', err.message)
+    process.exit(1)
     }
 
 }

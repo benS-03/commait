@@ -14,7 +14,7 @@ const simple_git_1 = __importDefault(require("simple-git"));
 const git = (0, simple_git_1.default)();
 async function getStagedDiff() {
     try {
-        const diff = await git.diff();
+        const diff = await git.diff(['--staged']);
         return diff;
     }
     catch (err) {
@@ -54,14 +54,19 @@ function getRepoName() {
 }
 async function commmit(message) {
     try {
-        await git.add(".");
         await git.commit(message);
         console.log("Commit seccessful");
     }
     catch (err) {
-        console.error("Commit failed");
-        console.log(err);
-        //comment just to make diff not empty
+        console.error('RAW ERROR:', err.message);
+        if (err.message.includes('index.lock')) {
+            console.error('✖ Git is locked by another process.');
+            console.error('  Fix it by running: rm .git/index.lock');
+            process.exit(1);
+        }
+        // handle other errors
+        console.error('✖ Git error:', err.message);
+        process.exit(1);
     }
 }
 async function pushChanges() {
