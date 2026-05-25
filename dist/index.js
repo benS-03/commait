@@ -37,7 +37,6 @@ program.command("commit")
         const stripped = (0, git_1.stripNoiseFiles)(parsed);
         diff = (0, git_1.diffFilesToString)(stripped);
         console.log(`diff lenght ${diff.length}`);
-        console.log(diff);
     }
     while (cont) {
         if (options.context) {

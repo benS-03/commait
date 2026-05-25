@@ -247,3 +247,5 @@ export function diffFilesToString(files: DiffFile[]): string {
     .map(f => f.block.trim())
     .join("\n\n");
 }
+
+//fun comment

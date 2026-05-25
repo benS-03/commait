@@ -46,7 +46,6 @@ program.command("commit")
         const stripped = stripNoiseFiles(parsed);
         diff = diffFilesToString(stripped);
         console.log(`diff lenght ${diff.length}`)
-        console.log(diff);
     }
 
     while(cont) {
