@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk"
 require('dotenv').config();
 import { encoding_for_model } from "tiktoken";
 import {loadConfig, CommaitConfig } from "./config";
-
+import { Ollama } from "ollama";
 
 export const MODEL_REGISTRY = {
     openai: [
@@ -25,8 +25,9 @@ export const DEFAULT_MODELS = {
     anthropic: "claude-sonnet-4-6"
 } as const;
 export interface AIProvider {
-    generateCommitMessage(diff: string): Promise<string>;
+    generateCommitMessage(diff: string, context?: string): Promise<string>;
     countInputTokens(diff: string): Promise<number>;
+    getModels(): Promise<string[]>,
 }
 
 export class OpenAIProvider implements AIProvider {
@@ -47,12 +48,16 @@ export class OpenAIProvider implements AIProvider {
         this.prompt = config.prompt;
     }
 
-    async generateCommitMessage(diff: string): Promise<string> {
-         const res = await this.client.chat.completions.create({
+    async generateCommitMessage(diff: string, context: string = ""): Promise<string> {
+        let contextMessage = "";
+        if (context){
+            contextMessage = `Consider this user provided constext ${context}\n`
+        } 
+        const res = await this.client.chat.completions.create({
             model: this.model,
             messages: [ {
                 role:"system",
-                content: this.prompt,
+                content: contextMessage + this.prompt,
             },
             {
                 role: "user",
@@ -71,6 +76,10 @@ export class OpenAIProvider implements AIProvider {
 
         enc.free();
         return sysTokens + diffTokens;
+    }
+
+    async getModels(): Promise<string[]> {
+        return Array.from(MODEL_REGISTRY.openai);
     }
 }
 
@@ -91,14 +100,18 @@ export class AnthropicProvider implements AIProvider {
         this.prompt = config.prompt;
     }
 
-    async generateCommitMessage(diff: string): Promise<string> {
+    async generateCommitMessage(diff: string, context: string = ""): Promise<string> {
+        let contextMessage = "";
+        if (context) {
+            contextMessage = `Consider this user provided constext ${context}\n`
+        }
         const res = await this.client.messages.create({
             model: this.model,
             max_tokens: 200,
             messages: [
                 {
                     role: "user",
-                    content: `${this.prompt} \n\n ${diff}`,
+                    content: `${contextMessage}\n\n${this.prompt} \n\n ${diff}`,
                 },
             ],
         });
@@ -116,6 +129,53 @@ export class AnthropicProvider implements AIProvider {
         })
 
         return res.input_tokens;
+    }
+
+    async getModels(): Promise<string[]> {
+        return Array.from(MODEL_REGISTRY.openai);
+    }
+}
+
+export class OllamaProvider implements AIProvider{
+    private client: Ollama;
+    private prompt:string;
+    private model: string;
+    constructor(config: CommaitConfig) {
+        this.client = new Ollama({ host: "http://localhost:11434"});
+        this.prompt = config.prompt;
+        this.model = config.model;
+    }
+
+    async generateCommitMessage(diff: string, context: string): Promise<string> {
+        let contextMessage = "";
+        if (context){
+            contextMessage = `Consider this user provided constext ${context}\n`
+        } 
+        const res = await this.client.chat({
+            model: this.model,
+            messages: [
+                {
+                    role: "system",
+                    content: contextMessage + this.prompt,
+                },
+                {
+                    role: "user",
+                    content: `Write a commit message for this diff:\n\n${diff}`,
+                },
+            ]
+        });
+
+        return res.message.content.trim();
+    }
+
+    async countInputTokens(diff: string) {
+        return Math.ceil(diff.length / 4);
+    }
+
+    async getModels(): Promise<string[]> {
+        
+        const models = await this.client.list();
+        return ["NOT IMPLEMENTED"]
     }
 }
 

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.configInitPrompt = configInitPrompt;
 exports.confirmCommit = confirmCommit;
 exports.confirmContinue = confirmContinue;
+exports.typePrompt = typePrompt;
 const inquirer_1 = __importDefault(require("inquirer"));
 const ai_1 = require("./ai");
 async function configInitPrompt() {
@@ -81,4 +82,14 @@ async function confirmContinue(message = "Continue?") {
         },
     ]);
     return confirm;
+}
+async function typePrompt(message) {
+    const answer = await inquirer_1.default.prompt([
+        {
+            type: "input",
+            name: "res",
+            message: message,
+        }
+    ]);
+    return answer.res;
 }

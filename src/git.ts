@@ -1,7 +1,8 @@
 import { execSync } from "child_process";
-import path from "path";
+import path, { parse } from "path";
 import simpleGit from "simple-git";
 export const git = simpleGit();
+import {AIProvider} from "./ai"
 
 export async function getStagedDiff() {
 
@@ -109,4 +110,140 @@ export async function pushChanges() {
     } catch (err) {
         console.error("Push Failed");
     }
+}
+
+export interface DiffFile {
+    filename: string
+    block: string
+    isDeleted: boolean
+    isRenamed: boolean
+    renamedFrom?: string
+    renamedTo?: string
+    changedLines: number
+}
+
+export async function compressDiffToLimit(
+    diff: string,
+    limit: number,
+    provider: AIProvider
+): Promise<{diff: string; log: string[]}> {
+    
+    const files: DiffFile[] = parseDiff(diff);
+    
+    return {diff: JSON.stringify(files), log: ["nothing yet"]};
+
+
+}
+
+export function parseDiff(diff: string): DiffFile[] {
+    const files = diff.split(/(?=^diff --git )/m).filter(Boolean);
+    const res: DiffFile[] = [];
+    files.forEach((block) => {
+        const file: DiffFile = {
+            filename: "",
+            block: "",
+            isDeleted: false,
+            isRenamed: false,
+            renamedFrom: "",
+            renamedTo: "",
+            changedLines: 0
+        };
+
+        file.filename = block.match(/^diff --git a\/.+b\/(.+)$/m)?.[1] ?? "";
+        file.block = block;
+        file.isDeleted = /^deleted file mode/m.test(block);
+
+        const renameFrom = block.match(/^rename from (.+)$/m)?.[1];
+        const renameTo = block.match(/^rename to (.+)$/m)?.[1];
+        file.isRenamed = renameFrom !== undefined && renameTo !== undefined;
+        if (file.isRenamed){
+            file.renamedTo = renameTo;
+            file.renamedFrom = renameFrom;
+        };
+
+        file.changedLines = block
+        .split('\n')
+        .filter(line => /^[+-]/.test(line) && !/^(\+\+\+|---)/.test(line))
+        .length;
+
+        res.push(file)
+    })
+    return res;
+}
+
+const NOISE_PATTERNS: RegExp[] = [
+    //Lock Files
+    /package-lock\.json$/,
+    /yarn\.lock$/,
+    /pnpm-lock\.yaml$/,
+    /Gemfile\.lock$/,
+    /poetry\.lock$/,
+    /Pipfile\.lock$/,
+    /composer\.lock$/,
+    /[Cc]ar[gG]o\.lock$/,
+    /packages\.lock\.json$/,
+    /pubspec\.lock$/,
+
+    // Build output
+    /^dist\//,
+    /^build\//,
+    /^out\//,
+    /^\.next\//,
+    /^\.nuxt\//,
+    /^\.output\//,
+    /^coverage\//,
+    /^\.nyc_output\//,
+    /^__pycache__\//,
+    /^\.cache\//,
+    /^target\//,
+    /^bin\//,
+    /^obj\//,
+
+    // Minified
+    /\.min\.js$/,
+    /\.min\.css$/,
+    /\.bundle\.js$/,
+    /\.chunk\.js$/,
+
+    // Generated code
+    /\.pb\.go$/,
+    /\.pb\.swift$/,
+    /_pb2\.py$/,
+    /\.generated\./,
+    /graphql\.schema\.json$/,
+    /openapi\.json$/,
+    /swagger\.json$/,
+
+    // Source maps
+    /\.map$/,
+
+    // Binary/media
+    /\.(png|jpg|jpeg|gif|webp|ico)$/,
+    /\.(mp4|mp3|wav|ogg|webm)$/,
+    /\.(pdf|doc|docx|xls|xlsx)$/,
+    /\.(zip|tar|gz|rar|7z)$/,
+    /\.(ttf|woff|woff2|eot)$/,
+
+    // IDE/OS
+    /\.DS_Store$/,
+    /Thumbs\.db$/,
+    /\.idea\//,
+
+    // Snapshots
+    /__snapshots__\//,
+    /\.snap$/,
+
+    // Changelogs
+    /changelog\.md$/i,
+
+]
+
+export function stripNoiseFiles(diff: DiffFile[]) {
+    return diff.filter((file => !NOISE_PATTERNS.some(pattern => pattern.test(file.filename))))
+}
+
+export function diffFilesToString(files: DiffFile[]): string {
+  return files
+    .map(f => f.block.trim())
+    .join("\n\n");
 }

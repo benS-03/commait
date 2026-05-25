@@ -10,6 +10,10 @@ exports.getRepoName = getRepoName;
 exports.commmit = commmit;
 exports.commitWithRetry = commitWithRetry;
 exports.pushChanges = pushChanges;
+exports.compressDiffToLimit = compressDiffToLimit;
+exports.parseDiff = parseDiff;
+exports.stripNoiseFiles = stripNoiseFiles;
+exports.diffFilesToString = diffFilesToString;
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const simple_git_1 = __importDefault(require("simple-git"));
@@ -104,4 +108,105 @@ async function pushChanges() {
     catch (err) {
         console.error("Push Failed");
     }
+}
+async function compressDiffToLimit(diff, limit, provider) {
+    const files = parseDiff(diff);
+    return { diff: JSON.stringify(files), log: ["nothing yet"] };
+}
+function parseDiff(diff) {
+    const files = diff.split(/(?=^diff --git )/m).filter(Boolean);
+    const res = [];
+    files.forEach((block) => {
+        const file = {
+            filename: "",
+            block: "",
+            isDeleted: false,
+            isRenamed: false,
+            renamedFrom: "",
+            renamedTo: "",
+            changedLines: 0
+        };
+        file.filename = block.match(/^diff --git a\/.+b\/(.+)$/m)?.[1] ?? "";
+        file.block = block;
+        file.isDeleted = /^deleted file mode/m.test(block);
+        const renameFrom = block.match(/^rename from (.+)$/m)?.[1];
+        const renameTo = block.match(/^rename to (.+)$/m)?.[1];
+        file.isRenamed = renameFrom !== undefined && renameTo !== undefined;
+        if (file.isRenamed) {
+            file.renamedTo = renameTo;
+            file.renamedFrom = renameFrom;
+        }
+        ;
+        file.changedLines = block
+            .split('\n')
+            .filter(line => /^[+-]/.test(line) && !/^(\+\+\+|---)/.test(line))
+            .length;
+        res.push(file);
+    });
+    return res;
+}
+const NOISE_PATTERNS = [
+    //Lock Files
+    /package-lock\.json$/,
+    /yarn\.lock$/,
+    /pnpm-lock\.yaml$/,
+    /Gemfile\.lock$/,
+    /poetry\.lock$/,
+    /Pipfile\.lock$/,
+    /composer\.lock$/,
+    /[Cc]ar[gG]o\.lock$/,
+    /packages\.lock\.json$/,
+    /pubspec\.lock$/,
+    // Build output
+    /^dist\//,
+    /^build\//,
+    /^out\//,
+    /^\.next\//,
+    /^\.nuxt\//,
+    /^\.output\//,
+    /^coverage\//,
+    /^\.nyc_output\//,
+    /^__pycache__\//,
+    /^\.cache\//,
+    /^target\//,
+    /^bin\//,
+    /^obj\//,
+    // Minified
+    /\.min\.js$/,
+    /\.min\.css$/,
+    /\.bundle\.js$/,
+    /\.chunk\.js$/,
+    // Generated code
+    /\.pb\.go$/,
+    /\.pb\.swift$/,
+    /_pb2\.py$/,
+    /\.generated\./,
+    /graphql\.schema\.json$/,
+    /openapi\.json$/,
+    /swagger\.json$/,
+    // Source maps
+    /\.map$/,
+    // Binary/media
+    /\.(png|jpg|jpeg|gif|webp|ico)$/,
+    /\.(mp4|mp3|wav|ogg|webm)$/,
+    /\.(pdf|doc|docx|xls|xlsx)$/,
+    /\.(zip|tar|gz|rar|7z)$/,
+    /\.(ttf|woff|woff2|eot)$/,
+    // IDE/OS
+    /\.DS_Store$/,
+    /Thumbs\.db$/,
+    /\.idea\//,
+    // Snapshots
+    /__snapshots__\//,
+    /\.snap$/,
+    // Changelogs
+    /changelog\.md$/i,
+];
+function stripNoiseFiles(diff) {
+    return diff.filter((file => !NOISE_PATTERNS.some(pattern => pattern.test(file.filename))));
+}
+function diffFilesToString(files) {
+    return files
+        .map(f => f.block.trim())
+        .join("\n\n");
 }

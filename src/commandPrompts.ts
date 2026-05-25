@@ -81,3 +81,15 @@ export async function confirmContinue(message = "Continue?") {
 
     return confirm;
 }
+
+export async function typePrompt(message: string){
+  const answer = await inquirer.prompt([
+    {
+      type: "input",
+      name: "res",
+      message: message,
+    }
+
+  ])
+  return answer.res;
+}

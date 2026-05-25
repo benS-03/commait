@@ -1,0 +1,334 @@
+diff --git a/package-lock.json b/package-lock.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/package-lock.json
+@@ -0,0 +1,3 @@
++{
++  "comment": "lock file noise"
++}
+diff --git a/yarn.lock b/yarn.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/yarn.lock
+@@ -0,0 +1,3 @@
++# yarn lock noise file
++__metadata__: true
++
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/pnpm-lock.yaml
+@@ -0,0 +1,2 @@
++lockfileVersion: 5.4
++comment: pnpm lock noise
+diff --git a/Gemfile.lock b/Gemfile.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/Gemfile.lock
+@@ -0,0 +1,2 @@
++# ruby lock
++comment: gem lock
+diff --git a/poetry.lock b/poetry.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
+@@ -0,0 +1,2 @@
++# poetry lock
++comment = "python deps"
+diff --git a/Pipfile.lock b/Pipfile.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/Pipfile.lock
+@@ -0,0 +1,2 @@
++{
++  "comment": "pipenv lock"
++}
+diff --git a/composer.lock b/composer.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/composer.lock
+@@ -0,0 +1,2 @@
++{
++  "comment": "php lock"
++}
+diff --git a/CarGo.lock b/CarGo.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/CarGo.lock
+@@ -0,0 +1,2 @@
++// cargo lock file
++fn main() {}
+diff --git a/packages.lock.json b/packages.lock.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
+@@ -0,0 +1,2 @@
++{
++  "comment": "nuget lock"
++}
+diff --git a/pubspec.lock b/pubspec.lock
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
+@@ -0,0 +1,2 @@
++# flutter lock
++comment: pubspec lock
+diff --git a/dist/app.js b/dist/app.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/dist/app.js
+@@ -0,0 +1 @@
++// build output noise
+diff --git a/build/output.txt b/build/output.txt
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/build/output.txt
+@@ -0,0 +1 @@
++// build artifact
+diff --git a/out/result.txt b/out/result.txt
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/out/result.txt
+@@ -0,0 +1 @@
++// out dir artifact
+diff --git a/.next/server.js b/.next/server.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.next/server.js
+@@ -0,0 +1 @@
++// next build output
+diff --git a/.nuxt/app.js b/.nuxt/app.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.nuxt/app.js
+@@ -0,0 +1 @@
++// nuxt build output
+diff --git a/.output/server.js b/.output/server.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.output/server.js
+@@ -0,0 +1 @@
++// output build artifact
+diff --git a/coverage/index.html b/coverage/index.html
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/coverage/index.html
+@@ -0,0 +1 @@
++<!-- coverage report -->
+diff --git a/.nyc_output/output.json b/.nyc_output/output.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.nyc_output/output.json
+@@ -0,0 +1 @@
++{"comment":"nyc coverage"}
+diff --git a/__pycache__/file.pyc b/__pycache__/file.pyc
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/__pycache__/file.pyc
+@@ -0,0 +1 @@
++# compiled python cache
+diff --git a/.cache/data.json b/.cache/data.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.cache/data.json
+@@ -0,0 +1 @@
++{"cache": true}
+diff --git a/target/debug/app b/target/debug/app
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/target/debug/app
+@@ -0,0 +1 @@
++// rust target build
+diff --git a/bin/tool.sh b/bin/tool.sh
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/bin/tool.sh
+@@ -0,0 +1 @@
++# bin output
+diff --git a/obj/output.o b/obj/output.o
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/obj/output.o
+@@ -0,0 +1 @@
++// obj file
+diff --git a/app.min.js b/app.min.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/app.min.js
+@@ -0,0 +1 @@
++// minified js
+diff --git a/styles.min.css b/styles.min.css
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/styles.min.css
+@@ -0,0 +1 @@
++/* min css */
+diff --git a/app.bundle.js b/app.bundle.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/app.bundle.js
+@@ -0,0 +1 @@
++// bundle
+diff --git a/app.chunk.js b/app.chunk.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/app.chunk.js
+@@ -0,0 +1 @@
++// chunk
+diff --git a/proto.pb.go b/proto.pb.go
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/proto.pb.go
+@@ -0,0 +1 @@
++// protobuf go
+diff --git a/service.pb.swift b/service.pb.swift
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/service.pb.swift
+@@ -0,0 +1 @@
++// protobuf swift
+diff --git a/file_pb2.py b/file_pb2.py
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/file_pb2.py
+@@ -0,0 +1 @@
++# protobuf python
+diff --git a/schema.generated.ts b/schema.generated.ts
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/schema.generated.ts
+@@ -0,0 +1 @@
++// generated code
+diff --git a/graphql.schema.json b/graphql.schema.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/graphql.schema.json
+@@ -0,0 +1 @@
++{"schema":"graphql"}
+diff --git a/openapi.json b/openapi.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/openapi.json
+@@ -0,0 +1 @@
++{"openapi":3}
+diff --git a/swagger.json b/swagger.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/swagger.json
+@@ -0,0 +1 @@
++{"swagger":2}
+diff --git a/app.js.map b/app.js.map
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/app.js.map
+@@ -0,0 +1 @@
++// source map
+diff --git a/image.png b/image.png
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/image.png
+@@ -0,0 +1 @@
++binary
+diff --git a/video.mp4 b/video.mp4
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/video.mp4
+@@ -0,0 +1 @@
++binary
+diff --git a/file.pdf b/file.pdf
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/file.pdf
+@@ -0,0 +1 @@
++binary
+diff --git a/file.zip b/file.zip
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/file.zip
+@@ -0,0 +1 @@
++binary
+diff --git a/font.woff2 b/font.woff2
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/font.woff2
+@@ -0,0 +1 @@
++binary
+diff --git a/.DS_Store b/.DS_Store
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.DS_Store
+@@ -0,0 +1 @@
++mac metadata
+diff --git a/Thumbs.db b/Thumbs.db
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/Thumbs.db
+@@ -0,0 +1 @@
++windows metadata
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.idea/workspace.xml
+@@ -0,0 +1 @@
++ide config
+diff --git a/__snapshots__/test.snap b/__snapshots__/test.snap
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/__snapshots__/test.snap
+@@ -0,0 +1 @@
++snapshot data
+diff --git a/test.snap b/test.snap
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/test.snap
+@@ -0,0 +1 @@
++snapshot
+diff --git a/changelog.md b/changelog.md
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/changelog.md
+@@ -0,0 +1 @@
++# changelog noise file

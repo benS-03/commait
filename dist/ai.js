@@ -3,12 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = exports.MODEL_REGISTRY = void 0;
+exports.OllamaProvider = exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = exports.MODEL_REGISTRY = void 0;
 exports.getProvider = getProvider;
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 require('dotenv').config();
 const tiktoken_1 = require("tiktoken");
+const ollama_1 = require("ollama");
 exports.MODEL_REGISTRY = {
     openai: [
         "gpt-4.1-nano", // Ultra fast/cheap option
@@ -38,12 +39,16 @@ class OpenAIProvider {
         this.model = config.model;
         this.prompt = config.prompt;
     }
-    async generateCommitMessage(diff) {
+    async generateCommitMessage(diff, context = "") {
+        let contextMessage = "";
+        if (context) {
+            contextMessage = `Consider this user provided constext ${context}\n`;
+        }
         const res = await this.client.chat.completions.create({
             model: this.model,
             messages: [{
                     role: "system",
-                    content: this.prompt,
+                    content: contextMessage + this.prompt,
                 },
                 {
                     role: "user",
@@ -60,6 +65,9 @@ class OpenAIProvider {
         enc.free();
         return sysTokens + diffTokens;
     }
+    async getModels() {
+        return Array.from(exports.MODEL_REGISTRY.openai);
+    }
 }
 exports.OpenAIProvider = OpenAIProvider;
 class AnthropicProvider {
@@ -73,14 +81,18 @@ class AnthropicProvider {
         this.model = config.model;
         this.prompt = config.prompt;
     }
-    async generateCommitMessage(diff) {
+    async generateCommitMessage(diff, context = "") {
+        let contextMessage = "";
+        if (context) {
+            contextMessage = `Consider this user provided constext ${context}\n`;
+        }
         const res = await this.client.messages.create({
             model: this.model,
             max_tokens: 200,
             messages: [
                 {
                     role: "user",
-                    content: `${this.prompt} \n\n ${diff}`,
+                    content: `${contextMessage}\n\n${this.prompt} \n\n ${diff}`,
                 },
             ],
         });
@@ -97,8 +109,46 @@ class AnthropicProvider {
         });
         return res.input_tokens;
     }
+    async getModels() {
+        return Array.from(exports.MODEL_REGISTRY.openai);
+    }
 }
 exports.AnthropicProvider = AnthropicProvider;
+class OllamaProvider {
+    constructor(config) {
+        this.client = new ollama_1.Ollama({ host: "http://localhost:11434" });
+        this.prompt = config.prompt;
+        this.model = config.model;
+    }
+    async generateCommitMessage(diff, context) {
+        let contextMessage = "";
+        if (context) {
+            contextMessage = `Consider this user provided constext ${context}\n`;
+        }
+        const res = await this.client.chat({
+            model: this.model,
+            messages: [
+                {
+                    role: "system",
+                    content: contextMessage + this.prompt,
+                },
+                {
+                    role: "user",
+                    content: `Write a commit message for this diff:\n\n${diff}`,
+                },
+            ]
+        });
+        return res.message.content.trim();
+    }
+    async countInputTokens(diff) {
+        return Math.ceil(diff.length / 4);
+    }
+    async getModels() {
+        const models = await this.client.list();
+        return ["NOT IMPLEMENTED"];
+    }
+}
+exports.OllamaProvider = OllamaProvider;
 function getProvider(config) {
     switch (config.provider) {
         case "anthropic":

@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 
-import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges, commitWithRetry, git } from "./git";
+import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges, commitWithRetry, git, compressDiffToLimit, parseDiff, stripNoiseFiles, diffFilesToString } from "./git";
 import {getProvider,AIProvider ,OpenAIProvider, AnthropicProvider} from "./ai"
 import {  CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit} from "./config";
 import { Command } from "commander";
 import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
-import {configInitPrompt, confirmContinue, confirmCommit} from "./commandPrompts";
+import {configInitPrompt, confirmContinue, confirmCommit, typePrompt} from "./commandPrompts";
 import {edit} from "external-editor";
+
+import { testDiff } from "./testDiff";
+import { parse } from "node:path";
 
 
 const program = new Command();
@@ -19,6 +22,8 @@ program.command("commit")
 .description("Generate Message, commit locally, and optionally push changes")
 .option('--dry-run', 'run without commit or pushing')
 .option('-e, --edit', 'edit message before commit')
+.option('-c, --context', 'allows addition of further context')
+.option('--strip-noise', 'strips noise files from diff')
 .action(async (options) => {
 
     if (isGitRepo())
@@ -29,14 +34,29 @@ program.command("commit")
     };
 
     const config = loadConfig();
-    const diff: string = await getStagedDiff();
+    let diff: string = await getStagedDiff();
     let message: string = "";
     let tokens: number = 0;
     let cont: boolean= true;
     const provider: AIProvider= getProvider(config);
 
+    if(options.stripNoise){
+        console.log(`diff length: ${diff.length}`)
+        const parsed = parseDiff(diff);
+        const stripped = stripNoiseFiles(parsed);
+        diff = diffFilesToString(stripped);
+        console.log(`diff lenght ${diff.length}`)
+        console.log(diff);
+    }
+
     while(cont) {
-        message = await provider.generateCommitMessage(diff);
+        if (options.context){
+            const context = await typePrompt("Enter context for generation");
+            message = await provider.generateCommitMessage(diff, context)
+        }
+        else {
+            message = await provider.generateCommitMessage(diff);
+        }
         tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message)
@@ -74,6 +94,15 @@ program.command("commit")
     console.log("===========TOKEN USAGE===========");
     console.log(`Total input token usage: ${tokens}`);
 
+
+})
+
+program.command("testparse")
+.description("Tests diff parser")
+.action(()=> {
+
+    console.log(testDiff);
+    console.log(JSON.stringify(parseDiff(testDiff), null, 2));
 
 })
 

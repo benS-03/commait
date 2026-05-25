@@ -8,12 +8,15 @@ const commander_1 = require("commander");
 const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
 const external_editor_1 = require("external-editor");
+const testDiff_1 = require("./testDiff");
 const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 program.command("commit")
     .description("Generate Message, commit locally, and optionally push changes")
     .option('--dry-run', 'run without commit or pushing')
     .option('-e, --edit', 'edit message before commit')
+    .option('-c, --context', 'allows addition of further context')
+    .option('--strip-noise', 'strips noise files from diff')
     .action(async (options) => {
     if ((0, git_1.isGitRepo)())
         console.log("Current repo:" + (0, git_1.getRepoName)());
@@ -23,13 +26,27 @@ program.command("commit")
     }
     ;
     const config = (0, config_1.loadConfig)();
-    const diff = await (0, git_1.getStagedDiff)();
+    let diff = await (0, git_1.getStagedDiff)();
     let message = "";
     let tokens = 0;
     let cont = true;
     const provider = (0, ai_1.getProvider)(config);
+    if (options.stripNoise) {
+        console.log(`diff length: ${diff.length}`);
+        const parsed = (0, git_1.parseDiff)(diff);
+        const stripped = (0, git_1.stripNoiseFiles)(parsed);
+        diff = (0, git_1.diffFilesToString)(stripped);
+        console.log(`diff lenght ${diff.length}`);
+        console.log(diff);
+    }
     while (cont) {
-        message = await provider.generateCommitMessage(diff);
+        if (options.context) {
+            const context = await (0, commandPrompts_1.typePrompt)("Enter context for generation");
+            message = await provider.generateCommitMessage(diff, context);
+        }
+        else {
+            message = await provider.generateCommitMessage(diff);
+        }
         tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message);
@@ -61,6 +78,12 @@ program.command("commit")
     }
     console.log("===========TOKEN USAGE===========");
     console.log(`Total input token usage: ${tokens}`);
+});
+program.command("testparse")
+    .description("Tests diff parser")
+    .action(() => {
+    console.log(testDiff_1.testDiff);
+    console.log(JSON.stringify((0, git_1.parseDiff)(testDiff_1.testDiff), null, 2));
 });
 program.command("push")
     .description("Standalone push command")
