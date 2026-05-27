@@ -53,6 +53,15 @@ export function getRepoName(): string{
 
 }
 
+export function getRemotes(): string[]{
+    const remotes = execSync("git remote", {encoding: "utf-8"})
+    .split("\n")
+    .map(r => r.trim())
+    .filter(Boolean);
+
+    return remotes;
+}
+
 export async function commmit(message: string){
 
     try {
@@ -103,9 +112,9 @@ export async function commitWithRetry(
   }
 }
 
-export async function pushChanges() {
+export async function pushChanges(remote: string) {
     try {
-        await git.push();
+        await git.push(remote);
         console.log("Push successful");
     } catch (err) {
         console.error("Push Failed");

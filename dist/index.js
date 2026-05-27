@@ -86,11 +86,17 @@ program.command("commit")
         (0, git_1.commitWithRetry)(git_1.git, message);
     }
     if (config.auto_push) {
-        (0, git_1.pushChanges)();
+        if (config.ask_origin)
+            (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
+        else
+            (0, git_1.pushChanges)(config.default_origin);
     }
     else if (await (0, commandPrompts_1.confirmContinue)("Would you like to Push Changes? y/n")) {
         if (!options.dryRun) {
-            (0, git_1.pushChanges)();
+            if (config.ask_origin)
+                (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
+            else
+                (0, git_1.pushChanges)(config.default_origin);
         }
     }
     console.log("===========TOKEN USAGE===========");
@@ -106,7 +112,11 @@ program.command("push")
     .description("Standalone push command")
     .action(async () => {
     console.log("Pushing Changes");
-    (0, git_1.pushChanges)();
+    const config = (0, config_1.loadConfig)();
+    if (config.ask_origin)
+        (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
+    else
+        (0, git_1.pushChanges)(config.default_origin);
 });
 const config = program.command("config");
 config.command("init")
@@ -120,7 +130,7 @@ config.command("init")
     else {
         prompt = answers.prompt;
     }
-    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens);
+    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
 config.command("get")
     .description("Display current config")

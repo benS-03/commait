@@ -7,9 +7,12 @@ exports.configInitPrompt = configInitPrompt;
 exports.confirmCommit = confirmCommit;
 exports.confirmContinue = confirmContinue;
 exports.typePrompt = typePrompt;
+exports.remotePrompt = remotePrompt;
 const inquirer_1 = __importDefault(require("inquirer"));
 const ai_1 = require("./ai");
+const git_1 = require("./git");
 async function configInitPrompt() {
+    const remotes = (0, git_1.getRemotes)();
     const answers = await inquirer_1.default.prompt([
         {
             type: "list",
@@ -63,6 +66,21 @@ async function configInitPrompt() {
                 { name: "Auto Push Enabled", value: true },
                 { name: "Auto Push Disabled", value: false }
             ]
+        },
+        {
+            type: "list",
+            name: "askRemote",
+            message: "Ask for remote on every push?",
+            choices: [
+                { name: "Ask for remote on every push", value: true },
+                { name: "Do not ask", value: false }
+            ]
+        },
+        {
+            type: "list",
+            name: "defRemote",
+            message: "Select default remote to push to: ",
+            choices: remotes
         }
     ]);
     return answers;
@@ -102,4 +120,15 @@ async function typePrompt(message) {
         }
     ]);
     return answer.res;
+}
+async function remotePrompt() {
+    const answer = await inquirer_1.default.prompt([
+        {
+            type: "list",
+            name: "remote",
+            message: "Pick a remote to push too: ",
+            choices: (0, git_1.getRemotes)()
+        }
+    ]);
+    return answer.remote;
 }

@@ -25,7 +25,7 @@ function loadConfig() {
         return JSON.parse(raw);
     }
 }
-function saveConfig(provider, model, prompt, autoCommit = false, autoPush = false, max_diff_tokens = 12000) {
+function saveConfig(provider, model, prompt, autoCommit = false, autoPush = false, max_diff_tokens = 12000, defOrigin = "origin", askOrigin = false) {
     fs_1.default.mkdirSync(path_1.default.dirname(exports.CONFIG_PATH), { recursive: true });
     // Manually build the config object instead of directly stringifying input
     const configToSave = {
@@ -34,7 +34,9 @@ function saveConfig(provider, model, prompt, autoCommit = false, autoPush = fals
         prompt: prompt,
         auto_commit: autoCommit,
         auto_push: autoPush,
-        max_diff_tokens: max_diff_tokens
+        max_diff_tokens: max_diff_tokens,
+        default_origin: defOrigin,
+        ask_origin: askOrigin
     };
     const jsonString = JSON.stringify(configToSave, null, 2);
     fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);

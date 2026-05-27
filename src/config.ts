@@ -12,6 +12,8 @@ export type CommaitConfig = {
     auto_commit: boolean;
     auto_push: boolean;
     max_diff_tokens: number;
+    default_origin: string;
+    ask_origin: boolean;
 };
 
 
@@ -32,7 +34,7 @@ export function loadConfig(): CommaitConfig{
     }
 }
 
-export function saveConfig(provider: string, model:string, prompt:string, autoCommit: boolean = false, autoPush: boolean = false, max_diff_tokens: number = 12000) {
+export function saveConfig(provider: string, model:string, prompt:string, autoCommit: boolean = false, autoPush: boolean = false, max_diff_tokens: number = 12000, defOrigin: string = "origin", askOrigin: boolean = false) {
     fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
 
     // Manually build the config object instead of directly stringifying input
@@ -42,7 +44,9 @@ export function saveConfig(provider: string, model:string, prompt:string, autoCo
         prompt: prompt,
         auto_commit: autoCommit,
         auto_push: autoPush,
-        max_diff_tokens: max_diff_tokens
+        max_diff_tokens: max_diff_tokens,
+        default_origin: defOrigin,
+        ask_origin: askOrigin
     };
 
     const jsonString = JSON.stringify(configToSave, null, 2);

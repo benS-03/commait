@@ -7,6 +7,7 @@ exports.git = void 0;
 exports.getStagedDiff = getStagedDiff;
 exports.isGitRepo = isGitRepo;
 exports.getRepoName = getRepoName;
+exports.getRemotes = getRemotes;
 exports.commmit = commmit;
 exports.commitWithRetry = commitWithRetry;
 exports.pushChanges = pushChanges;
@@ -58,6 +59,13 @@ function getRepoName() {
         return "unknown repo";
     }
 }
+function getRemotes() {
+    const remotes = (0, child_process_1.execSync)("git remote", { encoding: "utf-8" })
+        .split("\n")
+        .map(r => r.trim())
+        .filter(Boolean);
+    return remotes;
+}
 async function commmit(message) {
     try {
         await exports.git.commit(message);
@@ -100,9 +108,9 @@ async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
         }
     }
 }
-async function pushChanges() {
+async function pushChanges(remote) {
     try {
-        await exports.git.push();
+        await exports.git.push(remote);
         console.log("Push successful");
     }
     catch (err) {

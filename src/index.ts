@@ -7,7 +7,7 @@ import { Command } from "commander";
 import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
-import {configInitPrompt, confirmContinue, confirmCommit, typePrompt} from "./commandPrompts";
+import {configInitPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt} from "./commandPrompts";
 import {edit} from "external-editor";
 
 import { testDiff } from "./testDiff";
@@ -100,11 +100,18 @@ program.command("commit")
         commitWithRetry(git, message);
     }
     if (config.auto_push) {
-        pushChanges();
+
+        if (config.ask_origin)
+            pushChanges(await remotePrompt());
+        else 
+            pushChanges(config.default_origin);
     }
     else if (await confirmContinue("Would you like to Push Changes? y/n")){
         if (!options.dryRun){
-            pushChanges();
+            if (config.ask_origin)
+                pushChanges(await remotePrompt());
+            else
+                pushChanges(config.default_origin);
         }
     }
 
@@ -127,7 +134,11 @@ program.command("push")
 .description("Standalone push command")
 .action(async() => {
     console.log("Pushing Changes");
-    pushChanges();
+    const config = loadConfig();
+    if (config.ask_origin)
+        pushChanges(await remotePrompt());
+    else
+        pushChanges(config.default_origin);
 })
 
 const config = program.command("config");
@@ -144,7 +155,7 @@ else {
     prompt = answers.prompt;
 }
 
-saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens);
+saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
 
 config.command("get")
