@@ -140,7 +140,7 @@ program.command("push")
     else
         pushChanges(config.default_origin);
 })
-
+// fun comment
 const config = program.command("config");
 
 config.command("init")
