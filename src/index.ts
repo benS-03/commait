@@ -141,6 +141,7 @@ program.command("push")
         pushChanges(config.default_origin);
 })
 // fun comment
+// ohmy god another fun comment
 const config = program.command("config");
 
 config.command("init")
