@@ -118,6 +118,8 @@ program.command("push")
     else
         (0, git_1.pushChanges)(config.default_origin);
 });
+// fun comment
+// ohmy god another fun comment
 const config = program.command("config");
 config.command("init")
     .description("initialize commait config")
@@ -142,5 +144,23 @@ config.command("loc")
     .description("Dispay path to config")
     .action(async () => {
     console.log("Path to config: " + config_1.CONFIG_PATH);
+});
+config.command("set [key] [value]")
+    .description("Set Individual config values")
+    .action(async (key, value) => {
+    if (!key) {
+        key = await (0, commandPrompts_1.configKeysPrompt)();
+    }
+    if (!value) {
+        value = await (0, commandPrompts_1.configValuePrompt)(key);
+    }
+    (0, config_1.configSet)(key, value);
+});
+config.command("options")
+    .description("List config options for usage in config set")
+    .action(() => {
+    Object.entries(config_1.CONFIG_OPTIONS).forEach(([key, value]) => {
+        console.log(`${key}: \n\t${value.description}\n\tOptions: ${value.options}`);
+    });
 });
 program.parse();

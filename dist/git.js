@@ -121,15 +121,23 @@ async function compressDiffToLimit(diff, limit, provider) {
     const log = [];
     const files = parseDiff(diff);
     //Strip Noise Files
-    const strippedFiles = stripNoiseFiles(files);
-    log.push("Stripped Noise Files from diff.");
-    if (await provider.countInputTokens(diffFilesToString(strippedFiles)) < limit) {
-        return { diff: diffFilesToString(strippedFiles), log };
+    let currentTok = await provider.countInputTokens(diffFilesToString(files));
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok - limit} tokens greater than token limit`);
     }
     else {
+        return { diff: diffFilesToString(files), log: log };
+    }
+    const strippedFiles = stripNoiseFiles(files);
+    log.push("Stripped Noise Files from diff.");
+    currentTok = await provider.countInputTokens(diffFilesToString(strippedFiles));
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok - limit} tokens greater than token limit`);
         throw new Error("Supported diff reduction methods cannot reduce diff below token limt.");
     }
-    return { diff: JSON.stringify(files), log: ["nothing yet"] };
+    else {
+        return { diff: diffFilesToString(strippedFiles), log: log };
+    }
 }
 function parseDiff(diff) {
     const files = diff.split(/(?=^diff --git )/m).filter(Boolean);

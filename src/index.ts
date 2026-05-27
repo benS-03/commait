@@ -2,12 +2,12 @@
 
 import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges, commitWithRetry, git, compressDiffToLimit, parseDiff, stripNoiseFiles, diffFilesToString } from "./git";
 import {getProvider,AIProvider ,OpenAIProvider, AnthropicProvider} from "./ai"
-import {  CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit} from "./config";
+import { configSet, CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit, CONFIG_OPTIONS} from "./config";
 import { Command } from "commander";
 import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
-import {configInitPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt} from "./commandPrompts";
+import { configKeysPrompt,configInitPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt, configValuePrompt} from "./commandPrompts";
 import {edit} from "external-editor";
 
 import { testDiff } from "./testDiff";
@@ -159,6 +159,7 @@ else {
 saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
 
+
 config.command("get")
 .description("Display current config")
 .action(async () => {
@@ -170,6 +171,27 @@ config.command("loc")
 .description("Dispay path to config")
 .action(async () => {
     console.log("Path to config: " + CONFIG_PATH);
+})
+
+config.command("set [key] [value]")
+.description("Set Individual config values")
+.action(async (key, value) => {
+    if (!key) {
+        key = await configKeysPrompt();
+    }
+    if (!value) {
+        value = await configValuePrompt(key);
+    }
+
+    configSet(key,value)
+})
+
+config.command("options")
+.description("List config options for usage in config set")
+.action(() => {
+    Object.entries(CONFIG_OPTIONS).forEach(([key, value]) => {
+        console.log(`${key}: \n\t${value.description}\n\tOptions: ${value.options}`)
+    })
 })
 
 program.parse();

@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CONFIG_PATH = void 0;
+exports.CONFIG_PATH = exports.CONFIG_OPTIONS = void 0;
 exports.loadConfig = loadConfig;
+exports.configSet = configSet;
 exports.saveConfig = saveConfig;
 exports.configAutoInit = configAutoInit;
 const path_1 = __importDefault(require("path"));
@@ -13,6 +14,40 @@ const fs_1 = __importDefault(require("fs"));
 require('dotenv').config();
 const aiPrompt_1 = require("./aiPrompt");
 const ai_1 = require("./ai");
+exports.CONFIG_OPTIONS = {
+    provider: {
+        description: "AI provider to use",
+        options: ["openai", "anthropic"],
+    },
+    model: {
+        description: "Model to use for the selected provider",
+        options: ["Based on Provider"],
+    },
+    prompt: {
+        description: "Custom prompt for commit message generation",
+        options: null,
+    },
+    auto_commit: {
+        description: "Commit without confirmation",
+        options: [true, false],
+    },
+    auto_push: {
+        description: "Push without confirmation",
+        options: [true, false],
+    },
+    max_diff_tokens: {
+        description: "Max tokens per diff before truncation",
+        options: ["Number Representing Max Tokens"],
+    },
+    default_origin: {
+        description: "Default remote to push to",
+        options: ["Different based on your enviroment"],
+    },
+    ask_origin: {
+        description: "Ask which remote to push to every time",
+        options: [true, false],
+    },
+};
 exports.CONFIG_PATH = path_1.default.join(os_1.default.homedir(), ".commait", "config.json");
 function loadConfig() {
     try {
@@ -24,6 +59,12 @@ function loadConfig() {
         const raw = fs_1.default.readFileSync(exports.CONFIG_PATH, "utf-8");
         return JSON.parse(raw);
     }
+}
+function configSet(key, value) {
+    const config = loadConfig();
+    config[key] = value;
+    const jsonString = JSON.stringify(config, null, 2);
+    fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);
 }
 function saveConfig(provider, model, prompt, autoCommit = false, autoPush = false, max_diff_tokens = 12000, defOrigin = "origin", askOrigin = false) {
     fs_1.default.mkdirSync(path_1.default.dirname(exports.CONFIG_PATH), { recursive: true });

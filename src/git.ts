@@ -141,19 +141,23 @@ export async function compressDiffToLimit(
     const files: DiffFile[] = parseDiff(diff);
 
     //Strip Noise Files
-
+    let currentTok = await provider.countInputTokens(diffFilesToString(files));
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit`);
+    } else {
+        return {diff: diffFilesToString(files), log: log};
+    }
     const strippedFiles = stripNoiseFiles(files);
     log.push("Stripped Noise Files from diff.")
 
-    if (await provider.countInputTokens(diffFilesToString(strippedFiles)) < limit) {
-        return {diff: diffFilesToString(strippedFiles), log};
-    }
-    else {
+    currentTok = await provider.countInputTokens(diffFilesToString(strippedFiles));
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit`);
         throw new Error("Supported diff reduction methods cannot reduce diff below token limt.")
+    } else {
+        return {diff: diffFilesToString(strippedFiles), log: log};
     }
     
-    return {diff: JSON.stringify(files), log: ["nothing yet"]};
-
 
 }
 
@@ -174,7 +178,7 @@ export function parseDiff(diff: string): DiffFile[] {
         file.filename = block.match(/^diff --git a\/.+b\/(.+)$/m)?.[1] ?? "";
         file.block = block;
         file.isDeleted = /^deleted file mode/m.test(block);
-
+        
         const renameFrom = block.match(/^rename from (.+)$/m)?.[1];
         const renameTo = block.match(/^rename to (.+)$/m)?.[1];
         file.isRenamed = renameFrom !== undefined && renameTo !== undefined;

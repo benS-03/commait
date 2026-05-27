@@ -3,7 +3,8 @@ import os from "os";
 import fs from "fs";
 require('dotenv').config();
 import {commitMessagePrompt} from "./aiPrompt"
-import {DEFAULT_MODELS} from "./ai"
+import {DEFAULT_MODELS, MODEL_REGISTRY} from "./ai"
+import { getRemotes } from "./git";
 
 export type CommaitConfig = {
     provider: "openai" | "anthropic";
@@ -17,13 +18,55 @@ export type CommaitConfig = {
 };
 
 
+type ConfigOption = {
+  description: string;
+  options: readonly any[] | null;
+};
+
+export const CONFIG_OPTIONS: Record<string, ConfigOption> = {
+  provider: {
+    description: "AI provider to use",
+    options: ["openai", "anthropic"],
+  },
+  model: {
+    description: "Model to use for the selected provider",
+    options: ["Based on Provider"],
+  },
+  prompt: {
+    description: "Custom prompt for commit message generation",
+    options: null,
+  },
+  auto_commit: {
+    description: "Commit without confirmation",
+    options: [true, false],
+  },
+  auto_push: {
+    description: "Push without confirmation",
+    options: [true, false],
+  },
+  max_diff_tokens: {
+    description: "Max tokens per diff before truncation",
+    options: ["Number Representing Max Tokens"],
+  },
+  default_origin: {
+    description: "Default remote to push to",
+    options: ["Different based on your enviroment"],
+  },
+  ask_origin: {
+    description: "Ask which remote to push to every time",
+    options: [true, false],
+  },
+};
+
+
+
 export const CONFIG_PATH = path.join(
     os.homedir(),
     ".commait",
     "config.json"
 );
 
-export function loadConfig(): CommaitConfig{
+export function loadConfig(){
     try {
         const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
         return JSON.parse(raw);
@@ -32,6 +75,17 @@ export function loadConfig(): CommaitConfig{
         const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
         return JSON.parse(raw);
     }
+}
+
+export function configSet(key: string, value: string) {
+
+    const config = loadConfig();
+    config[key] = value;
+
+    const jsonString = JSON.stringify(config, null, 2);
+
+    fs.writeFileSync(CONFIG_PATH, jsonString);
+
 }
 
 export function saveConfig(provider: string, model:string, prompt:string, autoCommit: boolean = false, autoPush: boolean = false, max_diff_tokens: number = 12000, defOrigin: string = "origin", askOrigin: boolean = false) {
