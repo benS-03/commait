@@ -29,6 +29,16 @@ export async function configInitPrompt(){
         message: "Type a custom prompt here, leave blank for default."
       },
       {
+        type: "number",
+        name: "maxTokens",
+        message: "Enter max tokens per diff: ",
+        validate: (value) => {
+          if (!Number.isInteger(value) || value <= 0)
+            return "Enter a positive integer";
+          return true;
+        }
+      },
+      {
         type: "list",
         name: "autoCommit",
         message: "Commit without confirmation?",

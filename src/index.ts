@@ -35,6 +35,11 @@ program.command("commit")
 
     const config = loadConfig();
     let diff: string = await getStagedDiff();
+    if (diff == "")
+    {
+        console.log("Empty diff, did you git add anything?");
+        process.exit(1);
+    }
     let message: string = "";
     let tokens: number = 0;
     let cont: boolean= true;
@@ -46,6 +51,19 @@ program.command("commit")
         const stripped = stripNoiseFiles(parsed);
         diff = diffFilesToString(stripped);
         console.log(`diff lenght ${diff.length}`)
+    }
+    let compressionLog: string[];
+    try{
+        ({diff, log: compressionLog} = await compressDiffToLimit(diff, config.max_diff_tokens, provider ));
+        compressionLog.forEach((log) => {
+            console.log(log);
+        })
+    } catch (err) {
+        if (err instanceof Error)
+            console.log(err.message);
+        else 
+            console.log(err);
+        process.exit(1);
     }
 
     while(cont) {
@@ -62,7 +80,7 @@ program.command("commit")
 
         if (config.auto_commit) {
             await commitWithRetry(git, message);
-            break;
+            process.exit(1);
         }
 
         const answer = await confirmCommit();
@@ -126,7 +144,7 @@ else {
     prompt = answers.prompt;
 }
 
-saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers. autoPush);
+saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens);
 });
 
 config.command("get")

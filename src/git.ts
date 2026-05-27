@@ -128,7 +128,20 @@ export async function compressDiffToLimit(
     provider: AIProvider
 ): Promise<{diff: string; log: string[]}> {
     
+    const log: string[] = [];
     const files: DiffFile[] = parseDiff(diff);
+
+    //Strip Noise Files
+
+    const strippedFiles = stripNoiseFiles(files);
+    log.push("Stripped Noise Files from diff.")
+
+    if (await provider.countInputTokens(diffFilesToString(strippedFiles)) < limit) {
+        return {diff: diffFilesToString(strippedFiles), log};
+    }
+    else {
+        throw new Error("Supported diff reduction methods cannot reduce diff below token limt.")
+    }
     
     return {diff: JSON.stringify(files), log: ["nothing yet"]};
 

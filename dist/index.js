@@ -27,6 +27,10 @@ program.command("commit")
     ;
     const config = (0, config_1.loadConfig)();
     let diff = await (0, git_1.getStagedDiff)();
+    if (diff == "") {
+        console.log("Empty diff, did you git add anything?");
+        process.exit(1);
+    }
     let message = "";
     let tokens = 0;
     let cont = true;
@@ -37,6 +41,20 @@ program.command("commit")
         const stripped = (0, git_1.stripNoiseFiles)(parsed);
         diff = (0, git_1.diffFilesToString)(stripped);
         console.log(`diff lenght ${diff.length}`);
+    }
+    let compressionLog;
+    try {
+        ({ diff, log: compressionLog } = await (0, git_1.compressDiffToLimit)(diff, config.max_diff_tokens, provider));
+        compressionLog.forEach((log) => {
+            console.log(log);
+        });
+    }
+    catch (err) {
+        if (err instanceof Error)
+            console.log(err.message);
+        else
+            console.log(err);
+        process.exit(1);
     }
     while (cont) {
         if (options.context) {
@@ -51,7 +69,7 @@ program.command("commit")
         console.log(message);
         if (config.auto_commit) {
             await (0, git_1.commitWithRetry)(git_1.git, message);
-            break;
+            process.exit(1);
         }
         const answer = await (0, commandPrompts_1.confirmCommit)();
         if (answer.commitConfirm == 'y')
@@ -102,7 +120,7 @@ config.command("init")
     else {
         prompt = answers.prompt;
     }
-    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush);
+    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens);
 });
 config.command("get")
     .description("Display current config")
