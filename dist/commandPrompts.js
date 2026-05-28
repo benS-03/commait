@@ -10,6 +10,7 @@ exports.typePrompt = typePrompt;
 exports.remotePrompt = remotePrompt;
 exports.configKeysPrompt = configKeysPrompt;
 exports.configValuePrompt = configValuePrompt;
+exports.ynListPrompt = ynListPrompt;
 const inquirer_1 = __importDefault(require("inquirer"));
 const ai_1 = require("./ai");
 const config_1 = require("./config");
@@ -213,4 +214,24 @@ async function configValuePrompt(key) {
         }
     ]);
     return res.res;
+}
+async function ynListPrompt(message) {
+    const answer = await inquirer_1.default.prompt([
+        {
+            type: "list",
+            name: "yn",
+            message: message,
+            choices: [
+                {
+                    name: "Yes",
+                    value: true
+                },
+                {
+                    name: "No",
+                    value: false
+                }
+            ]
+        }
+    ]);
+    return answer.yn;
 }

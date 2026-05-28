@@ -7,7 +7,7 @@ import { Command } from "commander";
 import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
-import { configKeysPrompt,configInitPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt, configValuePrompt} from "./commandPrompts";
+import { configKeysPrompt,configInitPrompt, ynListPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt, configValuePrompt} from "./commandPrompts";
 import ora from "ora";
 
 import { testDiff } from "./testDiff";
@@ -144,7 +144,7 @@ program.command("commit")
         else 
             pushChanges(config.default_origin);
     }
-    else if (await confirmContinue("Would you like to Push Changes? y/n")){
+    else if (await ynListPrompt("Would you like to push changes?")){
         if (!options.dryRun){
             if (config.ask_origin)
                 pushChanges(await remotePrompt());

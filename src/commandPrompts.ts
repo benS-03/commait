@@ -219,3 +219,25 @@ export async function configValuePrompt(key: string){
 
   return res.res
 }
+
+export async function ynListPrompt(message: string) {
+  const answer = await inquirer.prompt([
+    {
+      type: "list",
+      name: "yn",
+      message: message,
+      choices: [
+        {
+          name: "Yes",
+          value: true
+        },
+        {
+          name: "No",
+          value: false
+        }
+      ]
+    }
+  ])
+
+  return answer.yn;
+}

@@ -120,7 +120,7 @@ program.command("commit")
         else
             (0, git_1.pushChanges)(config.default_origin);
     }
-    else if (await (0, commandPrompts_1.confirmContinue)("Would you like to Push Changes? y/n")) {
+    else if (await (0, commandPrompts_1.ynListPrompt)("Would you like to push changes?")) {
         if (!options.dryRun) {
             if (config.ask_origin)
                 (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
