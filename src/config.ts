@@ -66,6 +66,11 @@ export const CONFIG_PATH = path.join(
     "config.json"
 );
 
+/* ---------------------------------------------------------------
+ | loadConfig — loads config and saves as obj
+ | args: none
+ | returns: {}
+ --------------------------------------------------------------- */
 export function loadConfig(){
     try {
         const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
@@ -77,6 +82,11 @@ export function loadConfig(){
     }
 }
 
+/* ---------------------------------------------------------------
+ | configSet — rewrites a speiifc congif key given key an value
+ | args: key(string), value(string)
+ | returns: none
+ --------------------------------------------------------------- */
 export function configSet(key: string, value: string) {
 
     const config = loadConfig();
@@ -87,6 +97,14 @@ export function configSet(key: string, value: string) {
     fs.writeFileSync(CONFIG_PATH, jsonString);
 
 }
+/* ---------------------------------------------------------------
+ | saveConfig — given arg for all config keys, saves new config 
+ |              file.
+ | args: provider(string) model(string) prompt(string) autoCommit(boolean)
+ |       autoPush(boolean) max_diff_tokens(number) defOrigin(string)
+ |       askOrigin(boolean)
+ | returns: none
+ --------------------------------------------------------------- */
 
 export function saveConfig(provider: string, model:string, prompt:string, autoCommit: boolean = false, autoPush: boolean = false, max_diff_tokens: number = 12000, defOrigin: string = "origin", askOrigin: boolean = false) {
     fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
@@ -108,6 +126,11 @@ export function saveConfig(provider: string, model:string, prompt:string, autoCo
     fs.writeFileSync(CONFIG_PATH, jsonString);
 }
 
+/* ---------------------------------------------------------------
+ | configAutoInit — create new config file with default settings
+ | args: none
+ | returns: none
+ --------------------------------------------------------------- */
 export function configAutoInit() {
 
     let provider: string, model: string, prompt: string;

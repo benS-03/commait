@@ -28,6 +28,23 @@ exports.DEFAULT_MODELS = {
     openai: "gpt-4.1-mini",
     anthropic: "claude-sonnet-4-6"
 };
+/* ---------------------------------------------------------------
+ | OpenAiProvider
+ |
+ | This represent an Open AI client, extenting AIprovider and
+ | allowing ai functionality with openai.
+ |
+ | fields:
+ |   client (OpenAI) - open ai package object
+ |   model. (string) - model to be used
+ |   prompt (string) — prompt to be used
+ |
+ | methods:
+ |   constructor(config:CommaitConfig) - construcor
+ |   generateCommitMessage(diff:string,context?: string) - generate message w/ optional context
+ |   countInputTokens(diff:string) - returns token count for string
+ |   getModel() - returns list of usable models
+ --------------------------------------------------------------- */
 class OpenAIProvider {
     constructor(config) {
         this.model = "gpt-4o-mini";
@@ -70,6 +87,23 @@ class OpenAIProvider {
     }
 }
 exports.OpenAIProvider = OpenAIProvider;
+/* ---------------------------------------------------------------
+ | AnthropicProvider
+ |
+ | This represent an Anthropic client, extenting AIprovider and
+ | allowing ai functionality with anthropic.
+ |
+ | fields:
+ |   client (Anthropic) - open ai package object
+ |   model. (string) - model to be used
+ |   prompt (string) — prompt to be used
+ |
+ | methods:
+ |   constructor(config:CommaitConfig) - construcor
+ |   generateCommitMessage(diff:string,context?: string) - generate message w/ optional context
+ |   countInputTokens(diff:string) - returns token count for string
+ |   getModel() - returns list of usable models
+ --------------------------------------------------------------- */
 class AnthropicProvider {
     constructor(config) {
         const key = process.env.ANTHROPIC_API_KEY;
@@ -114,6 +148,23 @@ class AnthropicProvider {
     }
 }
 exports.AnthropicProvider = AnthropicProvider;
+/* ---------------------------------------------------------------
+ | OllamaProvider
+ |
+ | This represent an Ollama client, extenting AIprovider and
+ | allowing ai functionality with Ollama.
+ |
+ | fields:
+ |   client (Ollama) - open ai package object
+ |   model. (string) - model to be used
+ |   prompt (string) — prompt to be used
+ |
+ | methods:
+ |   constructor(config:CommaitConfig) - construcor
+ |   generateCommitMessage(diff:string,context?: string) - generate message w/ optional context
+ |   countInputTokens(diff:string) - returns token count for string
+ |   getModel() - returns list of usable models
+ --------------------------------------------------------------- */
 class OllamaProvider {
     constructor(config) {
         this.client = new ollama_1.Ollama({ host: "http://localhost:11434" });
@@ -149,6 +200,11 @@ class OllamaProvider {
     }
 }
 exports.OllamaProvider = OllamaProvider;
+/* ---------------------------------------------------------------
+ | getProvider — gives provider given config
+ | args: config(CommaitConfig)
+ | returns: AIProvider
+ --------------------------------------------------------------- */
 function getProvider(config) {
     switch (config.provider) {
         case "anthropic":

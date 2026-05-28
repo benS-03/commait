@@ -30,6 +30,23 @@ export interface AIProvider {
     getModels(): Promise<string[]>,
 }
 
+/* ---------------------------------------------------------------
+ | OpenAiProvider
+ |
+ | This represent an Open AI client, extenting AIprovider and 
+ | allowing ai functionality with openai.
+ |
+ | fields:
+ |   client (OpenAI) - open ai package object
+ |   model. (string) - model to be used
+ |   prompt (string) — prompt to be used
+ |
+ | methods:
+ |   constructor(config:CommaitConfig) - construcor
+ |   generateCommitMessage(diff:string,context?: string) - generate message w/ optional context
+ |   countInputTokens(diff:string) - returns token count for string
+ |   getModel() - returns list of usable models
+ --------------------------------------------------------------- */
 export class OpenAIProvider implements AIProvider {
     private client: OpenAI;
     private model: string = "gpt-4o-mini";
@@ -83,6 +100,23 @@ export class OpenAIProvider implements AIProvider {
     }
 }
 
+/* ---------------------------------------------------------------
+ | AnthropicProvider
+ |
+ | This represent an Anthropic client, extenting AIprovider and 
+ | allowing ai functionality with anthropic.
+ |
+ | fields:
+ |   client (Anthropic) - open ai package object
+ |   model. (string) - model to be used
+ |   prompt (string) — prompt to be used
+ |
+ | methods:
+ |   constructor(config:CommaitConfig) - construcor
+ |   generateCommitMessage(diff:string,context?: string) - generate message w/ optional context
+ |   countInputTokens(diff:string) - returns token count for string
+ |   getModel() - returns list of usable models
+ --------------------------------------------------------------- */
 export class AnthropicProvider implements AIProvider {
     private client: Anthropic;
     private model: string;
@@ -135,7 +169,23 @@ export class AnthropicProvider implements AIProvider {
         return Array.from(MODEL_REGISTRY.openai);
     }
 }
-
+/* ---------------------------------------------------------------
+ | OllamaProvider
+ |
+ | This represent an Ollama client, extenting AIprovider and 
+ | allowing ai functionality with Ollama.
+ |
+ | fields:
+ |   client (Ollama) - open ai package object
+ |   model. (string) - model to be used
+ |   prompt (string) — prompt to be used
+ |
+ | methods:
+ |   constructor(config:CommaitConfig) - construcor
+ |   generateCommitMessage(diff:string,context?: string) - generate message w/ optional context
+ |   countInputTokens(diff:string) - returns token count for string
+ |   getModel() - returns list of usable models
+ --------------------------------------------------------------- */
 export class OllamaProvider implements AIProvider{
     private client: Ollama;
     private prompt:string;
@@ -179,7 +229,11 @@ export class OllamaProvider implements AIProvider{
     }
 }
 
-
+/* ---------------------------------------------------------------
+ | getProvider — gives provider given config
+ | args: config(CommaitConfig)
+ | returns: AIProvider
+ --------------------------------------------------------------- */
 export function getProvider(config: CommaitConfig): AIProvider {
     switch (config.provider) {
         case "anthropic":

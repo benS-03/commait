@@ -4,6 +4,12 @@ import simpleGit from "simple-git";
 export const git = simpleGit();
 import {AIProvider} from "./ai"
 
+
+/* ---------------------------------------------------------------
+ | getStagedDiff — returns the staged gif diff
+ | args: None
+ | returns: string
+ --------------------------------------------------------------- */
 export async function getStagedDiff() {
 
     try{
@@ -14,7 +20,11 @@ export async function getStagedDiff() {
         return "failure";
     }
 }
-
+/* ---------------------------------------------------------------
+ | isGitRepo — returns t/f based on whether cli is running in git repo
+ | args: none, 
+ | returns: boolean
+ --------------------------------------------------------------- */
 export function isGitRepo(): boolean {
 
     try {
@@ -27,7 +37,11 @@ export function isGitRepo(): boolean {
         return false;
     }
 }
-
+/* ---------------------------------------------------------------
+ | getRepoName — returns name of current repo
+ | args: none
+ | returns: string
+ --------------------------------------------------------------- */
 export function getRepoName(): string{
 
     try {
@@ -52,7 +66,11 @@ export function getRepoName(): string{
 
 
 }
-
+/* ---------------------------------------------------------------
+ | getRemotes — returns list of git remotes
+ | args: none
+ | returns: string[]
+ --------------------------------------------------------------- */
 export function getRemotes(): string[]{
     const remotes = execSync("git remote", {encoding: "utf-8"})
     .split("\n")
@@ -62,6 +80,12 @@ export function getRemotes(): string[]{
     return remotes;
 }
 
+
+/* ---------------------------------------------------------------
+ | commit — commits staged changes with given message
+ | args: message(string)
+ | returns: none
+ --------------------------------------------------------------- */
 export async function commmit(message: string){
 
     try {
@@ -80,7 +104,11 @@ export async function commmit(message: string){
     }
 
 }
-
+/* ---------------------------------------------------------------
+ | commitWithRetry — attempts to commit a given # of times with given delay in between attempts
+ | args: git(SimpleGit), message(string), retries(number), delayMs(number)
+ | returns: none
+ --------------------------------------------------------------- */
 export async function commitWithRetry(
   git: any, 
   message: string, 
@@ -112,6 +140,11 @@ export async function commitWithRetry(
   }
 }
 
+/* ---------------------------------------------------------------
+ | pushChanges — pushes changes to github repo given remote
+ | args: remote(string)
+ | returns: none
+ --------------------------------------------------------------- */
 export async function pushChanges(remote: string) {
     try {
         await git.push(remote);
@@ -120,6 +153,7 @@ export async function pushChanges(remote: string) {
         console.error("Push Failed");
     }
 }
+
 
 export interface DiffFile {
     filename: string
@@ -131,6 +165,13 @@ export interface DiffFile {
     changedLines: number
 }
 
+/* ---------------------------------------------------------------
+ | compressDiffToLimit — driver function that takes a git diff 
+ |                       and returns a diff compressed to token 
+ |                       limit or max compression and a log.
+ | args: diff(string), limit(number), provider(AIProvider)
+ | returns: string
+ --------------------------------------------------------------- */
 export async function compressDiffToLimit(
     diff: string,
     limit: number,
@@ -161,6 +202,11 @@ export async function compressDiffToLimit(
 
 }
 
+/* ---------------------------------------------------------------
+ | parseDiff — coverts diff (string) to an array of type DiffFile
+ | args: diff(string)
+ | returns: DiffFile[]
+ --------------------------------------------------------------- */
 export function parseDiff(diff: string): DiffFile[] {
     const files = diff.split(/(?=^diff --git )/m).filter(Boolean);
     const res: DiffFile[] = [];
@@ -263,11 +309,21 @@ const NOISE_PATTERNS: RegExp[] = [
     /changelog\.md$/i,
 
 ]
-
+/* ---------------------------------------------------------------
+ | stripNoiseFiles — takes a DiffFile Array and remoces program 
+ |                   noise files (non user generated)
+ | args: diff(DiffFile[])
+ | returns: DiffFile[]
+ --------------------------------------------------------------- */
 export function stripNoiseFiles(diff: DiffFile[]) {
     return diff.filter((file => !NOISE_PATTERNS.some(pattern => pattern.test(file.filename))))
 }
 
+/* ---------------------------------------------------------------
+ | DiffFilesToString — converts array of diff files to cont. string
+ | args: files(DiffFile[])
+ | returns: string
+ --------------------------------------------------------------- */
 export function diffFilesToString(files: DiffFile[]): string {
   return files
     .map(f => f.block.trim())

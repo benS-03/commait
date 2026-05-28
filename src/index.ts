@@ -8,15 +8,16 @@ import inquirer from "inquirer";
 import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
 import { configKeysPrompt,configInitPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt, configValuePrompt} from "./commandPrompts";
-import {edit} from "external-editor";
+import ora from "ora";
 
 import { testDiff } from "./testDiff";
 import { parse } from "node:path";
 
 
 const program = new Command();
-
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
+
+// ======= COMMIT COMMANDS =======
 
 program.command("commit")
 .description("Generate Message, commit locally, and optionally push changes")
@@ -24,7 +25,10 @@ program.command("commit")
 .option('-e, --edit', 'edit message before commit')
 .option('-c, --context', 'allows addition of further context')
 .option('--strip-noise', 'strips noise files from diff')
+.option("--verbose", 'shows total token usage at end of commit')
 .action(async (options) => {
+
+    //======= Git Repo Check =======
 
     if (isGitRepo())
         console.log("Current repo:" + getRepoName());
@@ -33,18 +37,25 @@ program.command("commit")
         process.exit(1);
     };
 
+    //======= Data Loading, Variable Initialization =======
+
     const config = loadConfig();
+    let message: string = "";
+    let tokens: number = 0;
+    let cont: boolean= true;
     let diff: string = await getStagedDiff();
+
+    const provider: AIProvider= getProvider(config);
     if (diff == "")
     {
         console.log("Empty diff, did you git add anything?");
         process.exit(1);
     }
-    let message: string = "";
-    let tokens: number = 0;
-    let cont: boolean= true;
-    const provider: AIProvider= getProvider(config);
+    
 
+    //======= Pre Generation diff compression =======
+    
+    // Option to force compression
     if(options.stripNoise){
         console.log(`diff length: ${diff.length}`)
         const parsed = parseDiff(diff);
@@ -52,6 +63,7 @@ program.command("commit")
         diff = diffFilesToString(stripped);
         console.log(`diff lenght ${diff.length}`)
     }
+    //Compression
     let compressionLog: string[];
     try{
         ({diff, log: compressionLog} = await compressDiffToLimit(diff, config.max_diff_tokens, provider ));
@@ -66,25 +78,45 @@ program.command("commit")
         process.exit(1);
     }
 
+    // ======= Main commit loop =======
+    const spinner = ora({
+        text: "Generating Commit message. . .",
+        spinner: "flip",
+        color: "green"
+    })
     while(cont) {
+        // Message generation with optional context
+
         if (options.context){
+
             const context = await typePrompt("Enter context for generation");
+            spinner.start();
             message = await provider.generateCommitMessage(diff, context)
+            spinner.succeed("Commit Message Generated")
         }
         else {
+            spinner.start();
             message = await provider.generateCommitMessage(diff);
+            spinner.succeed("Commit Message Generated")
+
         }
+        // Token tracking and response loggin ( needs work)
         tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message)
-
+        
+        // Auto commit
         if (config.auto_commit) {
-            await commitWithRetry(git, message);
+            if (!options.dryRun)
+                await commitWithRetry(git, message);
             process.exit(1);
         }
 
+
+        //Prompt to commit or regenerate
         const answer = await confirmCommit();
 
+        // Flag logic for regeneration
         if (answer.commitConfirm == 'y')
             cont = false;
         else if (answer.commitConfirm == 'r')
@@ -93,12 +125,18 @@ program.command("commit")
             process.exit(1);
 
     }
+
+    // ======= Optional Editing and Other =======
+
+    //Editing of commmit
     if(options.edit){
-        message = edit(message);
+        //message = edit(message);
     }
+    //Dry
     if (!options.dryRun){
         commitWithRetry(git, message);
     }
+    // Pushing flow with auto and manual
     if (config.auto_push) {
 
         if (config.ask_origin)
@@ -115,34 +153,34 @@ program.command("commit")
         }
     }
 
-    console.log("===========TOKEN USAGE===========");
-    console.log(`Total input token usage: ${tokens}`);
-
-
+    if (options.verbose){
+        console.log("===========TOKEN USAGE===========");
+        console.log(`Total input token usage: ${tokens}`);
+    }
 })
 
-program.command("testparse")
-.description("Tests diff parser")
-.action(()=> {
-
-    console.log(testDiff);
-    console.log(JSON.stringify(parseDiff(testDiff), null, 2));
-
-})
+// ======= Push Commands =======
 
 program.command("push")
 .description("Standalone push command")
 .action(async() => {
     console.log("Pushing Changes");
     const config = loadConfig();
+    // auto remote or not.
     if (config.ask_origin)
         pushChanges(await remotePrompt());
     else
         pushChanges(config.default_origin);
 })
+
 // fun comment
 // ohmy god another fun comment
+
+// ======= Config Commands =======
+
 const config = program.command("config");
+
+// ======= Initialize Config Command =======
 
 config.command("init")
 .description("initialize commait config")
@@ -155,10 +193,10 @@ if (answers.prompt == "") {
 else {
     prompt = answers.prompt;
 }
-
 saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
 
+// ======= Get user Config Command =======
 
 config.command("get")
 .description("Display current config")
@@ -167,11 +205,15 @@ config.command("get")
     console.log(config);
 });
 
+// ======= Get Filepath to Config =======
+
 config.command("loc")
 .description("Dispay path to config")
 .action(async () => {
     console.log("Path to config: " + CONFIG_PATH);
 })
+
+// ======= Set specific values in config =======
 
 config.command("set [key] [value]")
 .description("Set Individual config values")
@@ -185,6 +227,8 @@ config.command("set [key] [value]")
 
     configSet(key,value)
 })
+
+// ======= Display All Config Keys =======
 
 config.command("options")
 .description("List config options for usage in config set")

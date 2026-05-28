@@ -49,6 +49,11 @@ exports.CONFIG_OPTIONS = {
     },
 };
 exports.CONFIG_PATH = path_1.default.join(os_1.default.homedir(), ".commait", "config.json");
+/* ---------------------------------------------------------------
+ | loadConfig — loads config and saves as obj
+ | args: none
+ | returns: {}
+ --------------------------------------------------------------- */
 function loadConfig() {
     try {
         const raw = fs_1.default.readFileSync(exports.CONFIG_PATH, "utf-8");
@@ -60,12 +65,25 @@ function loadConfig() {
         return JSON.parse(raw);
     }
 }
+/* ---------------------------------------------------------------
+ | configSet — rewrites a speiifc congif key given key an value
+ | args: key(string), value(string)
+ | returns: none
+ --------------------------------------------------------------- */
 function configSet(key, value) {
     const config = loadConfig();
     config[key] = value;
     const jsonString = JSON.stringify(config, null, 2);
     fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);
 }
+/* ---------------------------------------------------------------
+ | saveConfig — given arg for all config keys, saves new config
+ |              file.
+ | args: provider(string) model(string) prompt(string) autoCommit(boolean)
+ |       autoPush(boolean) max_diff_tokens(number) defOrigin(string)
+ |       askOrigin(boolean)
+ | returns: none
+ --------------------------------------------------------------- */
 function saveConfig(provider, model, prompt, autoCommit = false, autoPush = false, max_diff_tokens = 12000, defOrigin = "origin", askOrigin = false) {
     fs_1.default.mkdirSync(path_1.default.dirname(exports.CONFIG_PATH), { recursive: true });
     // Manually build the config object instead of directly stringifying input
@@ -82,6 +100,11 @@ function saveConfig(provider, model, prompt, autoCommit = false, autoPush = fals
     const jsonString = JSON.stringify(configToSave, null, 2);
     fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);
 }
+/* ---------------------------------------------------------------
+ | configAutoInit — create new config file with default settings
+ | args: none
+ | returns: none
+ --------------------------------------------------------------- */
 function configAutoInit() {
     let provider, model, prompt;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;

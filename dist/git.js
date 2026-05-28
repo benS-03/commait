@@ -19,6 +19,11 @@ const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const simple_git_1 = __importDefault(require("simple-git"));
 exports.git = (0, simple_git_1.default)();
+/* ---------------------------------------------------------------
+ | getStagedDiff — returns the staged gif diff
+ | args: None
+ | returns: string
+ --------------------------------------------------------------- */
 async function getStagedDiff() {
     try {
         const diff = await exports.git.diff(['--staged']);
@@ -29,6 +34,11 @@ async function getStagedDiff() {
         return "failure";
     }
 }
+/* ---------------------------------------------------------------
+ | isGitRepo — returns t/f based on whether cli is running in git repo
+ | args: none,
+ | returns: boolean
+ --------------------------------------------------------------- */
 function isGitRepo() {
     try {
         (0, child_process_1.execSync)("git rev-parse --is-inside-work-tree", {
@@ -40,6 +50,11 @@ function isGitRepo() {
         return false;
     }
 }
+/* ---------------------------------------------------------------
+ | getRepoName — returns name of current repo
+ | args: none
+ | returns: string
+ --------------------------------------------------------------- */
 function getRepoName() {
     try {
         const url = (0, child_process_1.execSync)("git remote get-url origin")
@@ -59,6 +74,11 @@ function getRepoName() {
         return "unknown repo";
     }
 }
+/* ---------------------------------------------------------------
+ | getRemotes — returns list of git remotes
+ | args: none
+ | returns: string[]
+ --------------------------------------------------------------- */
 function getRemotes() {
     const remotes = (0, child_process_1.execSync)("git remote", { encoding: "utf-8" })
         .split("\n")
@@ -66,6 +86,11 @@ function getRemotes() {
         .filter(Boolean);
     return remotes;
 }
+/* ---------------------------------------------------------------
+ | commit — commits staged changes with given message
+ | args: message(string)
+ | returns: none
+ --------------------------------------------------------------- */
 async function commmit(message) {
     try {
         await exports.git.commit(message);
@@ -83,6 +108,11 @@ async function commmit(message) {
         process.exit(1);
     }
 }
+/* ---------------------------------------------------------------
+ | commitWithRetry — attempts to commit a given # of times with given delay in between attempts
+ | args: git(SimpleGit), message(string), retries(number), delayMs(number)
+ | returns: none
+ --------------------------------------------------------------- */
 async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
@@ -108,6 +138,11 @@ async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
         }
     }
 }
+/* ---------------------------------------------------------------
+ | pushChanges — pushes changes to github repo given remote
+ | args: remote(string)
+ | returns: none
+ --------------------------------------------------------------- */
 async function pushChanges(remote) {
     try {
         await exports.git.push(remote);
@@ -117,6 +152,13 @@ async function pushChanges(remote) {
         console.error("Push Failed");
     }
 }
+/* ---------------------------------------------------------------
+ | compressDiffToLimit — driver function that takes a git diff
+ |                       and returns a diff compressed to token
+ |                       limit or max compression and a log.
+ | args: diff(string), limit(number), provider(AIProvider)
+ | returns: string
+ --------------------------------------------------------------- */
 async function compressDiffToLimit(diff, limit, provider) {
     const log = [];
     const files = parseDiff(diff);
@@ -139,6 +181,11 @@ async function compressDiffToLimit(diff, limit, provider) {
         return { diff: diffFilesToString(strippedFiles), log: log };
     }
 }
+/* ---------------------------------------------------------------
+ | parseDiff — coverts diff (string) to an array of type DiffFile
+ | args: diff(string)
+ | returns: DiffFile[]
+ --------------------------------------------------------------- */
 function parseDiff(diff) {
     const files = diff.split(/(?=^diff --git )/m).filter(Boolean);
     const res = [];
@@ -228,9 +275,20 @@ const NOISE_PATTERNS = [
     // Changelogs
     /changelog\.md$/i,
 ];
+/* ---------------------------------------------------------------
+ | stripNoiseFiles — takes a DiffFile Array and remoces program
+ |                   noise files (non user generated)
+ | args: diff(DiffFile[])
+ | returns: DiffFile[]
+ --------------------------------------------------------------- */
 function stripNoiseFiles(diff) {
     return diff.filter((file => !NOISE_PATTERNS.some(pattern => pattern.test(file.filename))));
 }
+/* ---------------------------------------------------------------
+ | DiffFilesToString — converts array of diff files to cont. string
+ | args: files(DiffFile[])
+ | returns: string
+ --------------------------------------------------------------- */
 function diffFilesToString(files) {
     return files
         .map(f => f.block.trim())

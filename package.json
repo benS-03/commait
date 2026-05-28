@@ -32,11 +32,12 @@
     "@types/inquirer": "^9.0.9",
     "commander": "^14.0.3",
     "dotenv": "^17.4.2",
-    "external-editor": "^3.1.0",
+    "external-editor": "^1.1.1",
     "fs": "^0.0.1-security",
     "inquirer": "^8.2.7",
     "ollama": "^0.6.3",
     "openai": "^6.38.0",
+    "ora": "^9.4.0",
     "simple-git": "^3.36.0",
     "tiktoken": "^1.0.22"
   }

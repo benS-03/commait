@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const git_1 = require("./git");
 const ai_1 = require("./ai");
@@ -7,17 +10,19 @@ const config_1 = require("./config");
 const commander_1 = require("commander");
 const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
-const external_editor_1 = require("external-editor");
-const testDiff_1 = require("./testDiff");
+const ora_1 = __importDefault(require("ora"));
 const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
+// ======= COMMIT COMMANDS =======
 program.command("commit")
     .description("Generate Message, commit locally, and optionally push changes")
     .option('--dry-run', 'run without commit or pushing')
     .option('-e, --edit', 'edit message before commit')
     .option('-c, --context', 'allows addition of further context')
     .option('--strip-noise', 'strips noise files from diff')
+    .option("--verbose", 'shows total token usage at end of commit')
     .action(async (options) => {
+    //======= Git Repo Check =======
     if ((0, git_1.isGitRepo)())
         console.log("Current repo:" + (0, git_1.getRepoName)());
     else {
@@ -25,16 +30,19 @@ program.command("commit")
         process.exit(1);
     }
     ;
+    //======= Data Loading, Variable Initialization =======
     const config = (0, config_1.loadConfig)();
+    let message = "";
+    let tokens = 0;
+    let cont = true;
     let diff = await (0, git_1.getStagedDiff)();
+    const provider = (0, ai_1.getProvider)(config);
     if (diff == "") {
         console.log("Empty diff, did you git add anything?");
         process.exit(1);
     }
-    let message = "";
-    let tokens = 0;
-    let cont = true;
-    const provider = (0, ai_1.getProvider)(config);
+    //======= Pre Generation diff compression =======
+    // Option to force compression
     if (options.stripNoise) {
         console.log(`diff length: ${diff.length}`);
         const parsed = (0, git_1.parseDiff)(diff);
@@ -42,6 +50,7 @@ program.command("commit")
         diff = (0, git_1.diffFilesToString)(stripped);
         console.log(`diff lenght ${diff.length}`);
     }
+    //Compression
     let compressionLog;
     try {
         ({ diff, log: compressionLog } = await (0, git_1.compressDiffToLimit)(diff, config.max_diff_tokens, provider));
@@ -56,22 +65,38 @@ program.command("commit")
             console.log(err);
         process.exit(1);
     }
+    // ======= Main commit loop =======
+    const spinner = (0, ora_1.default)({
+        text: "Generating Commit message. . .",
+        spinner: "flip",
+        color: "green"
+    });
     while (cont) {
+        // Message generation with optional context
         if (options.context) {
             const context = await (0, commandPrompts_1.typePrompt)("Enter context for generation");
+            spinner.start();
             message = await provider.generateCommitMessage(diff, context);
+            spinner.succeed("Commit Message Generated");
         }
         else {
+            spinner.start();
             message = await provider.generateCommitMessage(diff);
+            spinner.succeed("Commit Message Generated");
         }
+        // Token tracking and response loggin ( needs work)
         tokens += await provider.countInputTokens(diff);
         console.log("===========COMMIT MESSAGE===========");
         console.log(message);
+        // Auto commit
         if (config.auto_commit) {
-            await (0, git_1.commitWithRetry)(git_1.git, message);
+            if (!options.dryRun)
+                await (0, git_1.commitWithRetry)(git_1.git, message);
             process.exit(1);
         }
+        //Prompt to commit or regenerate
         const answer = await (0, commandPrompts_1.confirmCommit)();
+        // Flag logic for regeneration
         if (answer.commitConfirm == 'y')
             cont = false;
         else if (answer.commitConfirm == 'r')
@@ -79,12 +104,16 @@ program.command("commit")
         else
             process.exit(1);
     }
+    // ======= Optional Editing and Other =======
+    //Editing of commmit
     if (options.edit) {
-        message = (0, external_editor_1.edit)(message);
+        //message = edit(message);
     }
+    //Dry
     if (!options.dryRun) {
         (0, git_1.commitWithRetry)(git_1.git, message);
     }
+    // Pushing flow with auto and manual
     if (config.auto_push) {
         if (config.ask_origin)
             (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
@@ -99,20 +128,18 @@ program.command("commit")
                 (0, git_1.pushChanges)(config.default_origin);
         }
     }
-    console.log("===========TOKEN USAGE===========");
-    console.log(`Total input token usage: ${tokens}`);
+    if (options.verbose) {
+        console.log("===========TOKEN USAGE===========");
+        console.log(`Total input token usage: ${tokens}`);
+    }
 });
-program.command("testparse")
-    .description("Tests diff parser")
-    .action(() => {
-    console.log(testDiff_1.testDiff);
-    console.log(JSON.stringify((0, git_1.parseDiff)(testDiff_1.testDiff), null, 2));
-});
+// ======= Push Commands =======
 program.command("push")
     .description("Standalone push command")
     .action(async () => {
     console.log("Pushing Changes");
     const config = (0, config_1.loadConfig)();
+    // auto remote or not.
     if (config.ask_origin)
         (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
     else
@@ -120,7 +147,9 @@ program.command("push")
 });
 // fun comment
 // ohmy god another fun comment
+// ======= Config Commands =======
 const config = program.command("config");
+// ======= Initialize Config Command =======
 config.command("init")
     .description("initialize commait config")
     .action(async () => {
@@ -134,17 +163,20 @@ config.command("init")
     }
     (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
+// ======= Get user Config Command =======
 config.command("get")
     .description("Display current config")
     .action(async () => {
     const config = await (0, config_1.loadConfig)();
     console.log(config);
 });
+// ======= Get Filepath to Config =======
 config.command("loc")
     .description("Dispay path to config")
     .action(async () => {
     console.log("Path to config: " + config_1.CONFIG_PATH);
 });
+// ======= Set specific values in config =======
 config.command("set [key] [value]")
     .description("Set Individual config values")
     .action(async (key, value) => {
@@ -156,6 +188,7 @@ config.command("set [key] [value]")
     }
     (0, config_1.configSet)(key, value);
 });
+// ======= Display All Config Keys =======
 config.command("options")
     .description("List config options for usage in config set")
     .action(() => {
