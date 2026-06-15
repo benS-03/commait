@@ -17,4 +17,5 @@ describe("gitDiffReduction", () => {
         const res = stripped.length;
         expect(res).toBe(0);
     })
+
 })
