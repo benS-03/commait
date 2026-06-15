@@ -9,6 +9,7 @@ import { commitMessagePrompt } from "./aiPrompt";
 import { push } from "node:stream/iter";
 import { configKeysPrompt,configInitPrompt, ynListPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt, configValuePrompt} from "./commandPrompts";
 import ora from "ora";
+import {edit} from "@inquirer/external-editor"
 
 import { testDiff } from "./testDiff";
 import { parse } from "node:path";
@@ -130,7 +131,7 @@ program.command("commit")
 
     //Editing of commmit
     if(options.edit){
-        //message = edit(message);
+        message = edit(message);
     }
     //Dry
     if (!options.dryRun){

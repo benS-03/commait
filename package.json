@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
+    "@inquirer/external-editor": "^3.0.3",
     "@types/inquirer": "^9.0.9",
     "commander": "^14.0.3",
     "dotenv": "^17.4.2",
