@@ -52,7 +52,7 @@ program.command("commit")
         console.log("Empty diff, did you git add anything?");
         process.exit(1);
     }
-    
+    //fun comment
 
     //======= Pre Generation diff compression =======
     
@@ -78,7 +78,7 @@ program.command("commit")
             console.log(err);
         process.exit(1);
     }
-
+    //fun comment
     // ======= Main commit loop =======
     const spinner = ora({
         text: "Generating Commit message. . .",

@@ -11,6 +11,7 @@ const commander_1 = require("commander");
 const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
 const ora_1 = __importDefault(require("ora"));
+const external_editor_1 = require("@inquirer/external-editor");
 const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 // ======= COMMIT COMMANDS =======
@@ -41,6 +42,7 @@ program.command("commit")
         console.log("Empty diff, did you git add anything?");
         process.exit(1);
     }
+    //fun comment
     //======= Pre Generation diff compression =======
     // Option to force compression
     if (options.stripNoise) {
@@ -65,6 +67,7 @@ program.command("commit")
             console.log(err);
         process.exit(1);
     }
+    //fun comment
     // ======= Main commit loop =======
     const spinner = (0, ora_1.default)({
         text: "Generating Commit message. . .",
@@ -107,7 +110,7 @@ program.command("commit")
     // ======= Optional Editing and Other =======
     //Editing of commmit
     if (options.edit) {
-        //message = edit(message);
+        message = (0, external_editor_1.edit)(message);
     }
     //Dry
     if (!options.dryRun) {
