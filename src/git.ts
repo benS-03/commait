@@ -7,7 +7,74 @@ import { A } from "ollama/dist/shared/ollama.1bfa89da.cjs";
 
 
 const AVG_TOKENS_PER_LINE: number = 10;
+const MAX_TRIM_ITERATIONS: number = 6;
 
+const NOISE_PATTERNS: RegExp[] = [
+    //Lock Files
+    /package-lock\.json$/,
+    /yarn\.lock$/,
+    /pnpm-lock\.yaml$/,
+    /Gemfile\.lock$/,
+    /poetry\.lock$/,
+    /Pipfile\.lock$/,
+    /composer\.lock$/,
+    /[Cc]ar[gG]o\.lock$/,
+    /packages\.lock\.json$/,
+    /pubspec\.lock$/,
+
+    // Build output
+    /^dist\//,
+    /^build\//,
+    /^out\//,
+    /^\.next\//,
+    /^\.nuxt\//,
+    /^\.output\//,
+    /^coverage\//,
+    /^\.nyc_output\//,
+    /^__pycache__\//,
+    /^\.cache\//,
+    /^target\//,
+    /^bin\//,
+    /^obj\//,
+
+    // Minified
+    /\.min\.js$/,
+    /\.min\.css$/,
+    /\.bundle\.js$/,
+    /\.chunk\.js$/,
+
+    // Generated code
+    /\.pb\.go$/,
+    /\.pb\.swift$/,
+    /_pb2\.py$/,
+    /\.generated\./,
+    /graphql\.schema\.json$/,
+    /openapi\.json$/,
+    /swagger\.json$/,
+
+    // Source maps
+    /\.map$/,
+
+    // Binary/media
+    /\.(png|jpg|jpeg|gif|webp|ico)$/,
+    /\.(mp4|mp3|wav|ogg|webm)$/,
+    /\.(pdf|doc|docx|xls|xlsx)$/,
+    /\.(zip|tar|gz|rar|7z)$/,
+    /\.(ttf|woff|woff2|eot)$/,
+
+    // IDE/OS
+    /\.DS_Store$/,
+    /Thumbs\.db$/,
+    /\.idea\//,
+
+    // Snapshots
+    /__snapshots__\//,
+    /\.snap$/,
+
+    // Changelogs
+    /changelog\.md$/i,
+
+]
 
 /* ---------------------------------------------------------------
  | getStagedDiff — returns the staged gif diff
@@ -225,8 +292,14 @@ export async function compressDiffToLimit(
     files = stripLines(Originalfiles, allocation);
     currentTok = await provider.countInputTokens(diffFilesToString(files));
     let trimLimit = limit;
+    let lastExcess = Infinity;
 
-    while (currentTok > limit) {
+    //Strip Lines loop to approach limit
+    let iterations = 0; 
+    while (currentTok > limit && iterations < MAX_TRIM_ITERATIONS) {
+        const excess = currentTok - limit;
+        if (excess >= lastExcess) break;
+        lastExcess = excess;
         console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nTrimming Files More...`);
         trimLimit*=.7;
         allocation = allocateLineLimits(files, trimLimit, 5);
@@ -287,72 +360,7 @@ export function parseDiff(diff: string): DiffFile[] {
     return res;
 }
 
-const NOISE_PATTERNS: RegExp[] = [
-    //Lock Files
-    /package-lock\.json$/,
-    /yarn\.lock$/,
-    /pnpm-lock\.yaml$/,
-    /Gemfile\.lock$/,
-    /poetry\.lock$/,
-    /Pipfile\.lock$/,
-    /composer\.lock$/,
-    /[Cc]ar[gG]o\.lock$/,
-    /packages\.lock\.json$/,
-    /pubspec\.lock$/,
 
-    // Build output
-    /^dist\//,
-    /^build\//,
-    /^out\//,
-    /^\.next\//,
-    /^\.nuxt\//,
-    /^\.output\//,
-    /^coverage\//,
-    /^\.nyc_output\//,
-    /^__pycache__\//,
-    /^\.cache\//,
-    /^target\//,
-    /^bin\//,
-    /^obj\//,
-
-    // Minified
-    /\.min\.js$/,
-    /\.min\.css$/,
-    /\.bundle\.js$/,
-    /\.chunk\.js$/,
-
-    // Generated code
-    /\.pb\.go$/,
-    /\.pb\.swift$/,
-    /_pb2\.py$/,
-    /\.generated\./,
-    /graphql\.schema\.json$/,
-    /openapi\.json$/,
-    /swagger\.json$/,
-
-    // Source maps
-    /\.map$/,
-
-    // Binary/media
-    /\.(png|jpg|jpeg|gif|webp|ico)$/,
-    /\.(mp4|mp3|wav|ogg|webm)$/,
-    /\.(pdf|doc|docx|xls|xlsx)$/,
-    /\.(zip|tar|gz|rar|7z)$/,
-    /\.(ttf|woff|woff2|eot)$/,
-
-    // IDE/OS
-    /\.DS_Store$/,
-    /Thumbs\.db$/,
-    /\.idea\//,
-
-    // Snapshots
-    /__snapshots__\//,
-    /\.snap$/,
-
-    // Changelogs
-    /changelog\.md$/i,
-
-]
 /* ---------------------------------------------------------------
  | stripNoiseFiles — takes a DiffFile Array and remoces program 
  |                   noise files (non user generated)
@@ -372,7 +380,14 @@ export function stripContextLines(diff: DiffFile[]): DiffFile[] {
     }));
 }
 
-
+/* ---------------------------------------------------------------
+ | sttripHeader — takes a diffFile array and strips the header 
+                  from each individual file. Marks the newHeader
+                  flag true so string generration generates a 
+                  succint header.
+ | args: diff(DiffFile[])
+ | returns: DiffFile[]
+ --------------------------------------------------------------- */
 export function stripHeader(diff: DiffFile[]) {
 
     return diff.map((diffFile) => ({
@@ -384,6 +399,14 @@ export function stripHeader(diff: DiffFile[]) {
     }))
 }
 
+/* ---------------------------------------------------------------
+ | allocateLineLimits — Helper function for strip lines. Generates
+                        a map that maps strings to a amount of lines
+                        it is alloicated. This is generated based
+                        on the token limit and the file size
+ | args: diff(DiffFile[]), totalTokenBudget: number, tokenFloor: number
+ | returns: Map<string, number>
+ --------------------------------------------------------------- */
 export function allocateLineLimits(files: DiffFile[], totalTokenBudget: number, tokenFloor: number): Map<string, number> {
     const totalChangedLines = files.reduce((sum, f) => sum + f.changedLines, 0);
     const allocations = new Map<string, number>();
@@ -398,6 +421,13 @@ export function allocateLineLimits(files: DiffFile[], totalTokenBudget: number, 
     return allocations
 }
 
+/* ---------------------------------------------------------------
+ | stripLines — takes a array of diff files and an allocation map,
+                (see above) strip lines from the middle of each 
+                file according the the allocation map.
+ | args: diff(DiffFile[]), allocations(Map<string,number>)
+ | returns: DiffFile[]
+ --------------------------------------------------------------- */
 export function stripLines(diff: DiffFile[], allocations:Map<string, number> ) {
 
     return diff.map(file => {
@@ -445,7 +475,12 @@ export function stripLines(diff: DiffFile[], allocations:Map<string, number> ) {
     })
 
 }
-
+/* ---------------------------------------------------------------
+ | buildFileHeader — takes a diffFile and creates returns a 
+                     replacement header for a diff.
+ | args: diff(DiffFile[])
+ | returns: string
+ --------------------------------------------------------------- */
 function buildFileHeader(file: DiffFile): string {
     if (file.isDeleted) return `${file.filename} [D]`;
     if (file.isRenamed) return `${file.filename} [R:${file.renamedFrom}]`;
@@ -467,5 +502,3 @@ export function diffFilesToString(files: DiffFile[]): string {
         })
         .join("\n\n");
 }
-
-//fun comment
