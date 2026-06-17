@@ -3,6 +3,10 @@ import path, { parse } from "path";
 import simpleGit from "simple-git";
 export const git = simpleGit();
 import {AIProvider} from "./ai"
+import { A } from "ollama/dist/shared/ollama.1bfa89da.cjs";
+
+
+const AVG_TOKENS_PER_LINE: number = 10;
 
 
 /* ---------------------------------------------------------------
@@ -162,7 +166,8 @@ export interface DiffFile {
     isRenamed: boolean
     renamedFrom?: string
     renamedTo?: string
-    changedLines: number
+    changedLines: number,
+    newHeader: boolean,
 }
 
 /* ---------------------------------------------------------------
@@ -179,24 +184,62 @@ export async function compressDiffToLimit(
 ): Promise<{diff: string; log: string[]}> {
     
     const log: string[] = [];
-    const files: DiffFile[] = parseDiff(diff);
+    let files: DiffFile[] = parseDiff(diff);
 
     //Strip Noise Files
     let currentTok = await provider.countInputTokens(diffFilesToString(files));
     if (currentTok > limit) {
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit`);
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nStripping Noise Files...`);
     } else {
         return {diff: diffFilesToString(files), log: log};
     }
-    const strippedFiles = stripNoiseFiles(files);
-    log.push("Stripped Noise Files from diff.")
+    files = stripNoiseFiles(files);
+    currentTok = await provider.countInputTokens(diffFilesToString(files));
 
-    currentTok = await provider.countInputTokens(diffFilesToString(strippedFiles));
+    //Strip Header
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nStripping Headers...`);
+    } else {
+        return {diff: diffFilesToString(files), log: log};
+    }
+    files = stripHeader(files);
+    currentTok = await provider.countInputTokens(diffFilesToString(files));
+
+    //Strip Context
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nStripping Context Lines...`);
+    } else {
+        return {diff: diffFilesToString(files), log: log};
+    }
+    const Originalfiles = stripContextLines(files);
+    currentTok = await provider.countInputTokens(diffFilesToString(files));
+
+    //StripLines
+    if (currentTok > limit) {
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nTrimming Files Scaled to Limit...`);
+    } else {
+        return {diff: diffFilesToString(files), log: log};
+    }
+
+    let allocation = allocateLineLimits(files, limit, 15);
+    files = stripLines(Originalfiles, allocation);
+    currentTok = await provider.countInputTokens(diffFilesToString(files));
+    let trimLimit = limit;
+
+    while (currentTok > limit) {
+        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nTrimming Files More...`);
+        trimLimit*=.7;
+        allocation = allocateLineLimits(files, trimLimit, 5);
+        files = stripLines(Originalfiles, allocation)
+        currentTok = await provider.countInputTokens(diffFilesToString(files));
+    }
+
+    // Final Return Or Throw
     if (currentTok > limit) {
         console.log(`Diff is ${currentTok-limit} tokens greater than token limit`);
         throw new Error("Supported diff reduction methods cannot reduce diff below token limt.")
     } else {
-        return {diff: diffFilesToString(strippedFiles), log: log};
+        return {diff: diffFilesToString(files), log: log};
     }
     
 
@@ -218,7 +261,8 @@ export function parseDiff(diff: string): DiffFile[] {
             isRenamed: false,
             renamedFrom: "",
             renamedTo: "",
-            changedLines: 0
+            changedLines: 0,
+            newHeader: false
         };
 
         file.filename = block.match(/^diff --git a\/.+b\/(.+)$/m)?.[1] ?? "";
@@ -319,15 +363,109 @@ export function stripNoiseFiles(diff: DiffFile[]) {
     return diff.filter((file => !NOISE_PATTERNS.some(pattern => pattern.test(file.filename))))
 }
 
+export function stripContextLines(diff: DiffFile[]): DiffFile[] {
+    return diff.map((diffFile) => ({
+        ...diffFile,
+        block: diffFile.block
+            .replace(/^ [^\n]*\n?/gm, '')
+            .replace(/\n{3,}/g, '\n\n'),  // back to 3+, not 2+
+    }));
+}
+
+
+export function stripHeader(diff: DiffFile[]) {
+
+    return diff.map((diffFile) => ({
+        ...diffFile,
+        newHeader: true,
+        block: diffFile.block
+            .replace(/^[\s\S]*?(?=^@@)/m, '')
+
+    }))
+}
+
+export function allocateLineLimits(files: DiffFile[], totalTokenBudget: number, tokenFloor: number): Map<string, number> {
+    const totalChangedLines = files.reduce((sum, f) => sum + f.changedLines, 0);
+    const allocations = new Map<string, number>();
+
+    for (const file of files) {
+        const share = file.changedLines / totalChangedLines;
+
+        const allocatedLines = Math.max(tokenFloor, Math.floor(share * totalTokenBudget / AVG_TOKENS_PER_LINE));
+        allocations.set(file.filename, allocatedLines);
+    }
+
+    return allocations
+}
+
+export function stripLines(diff: DiffFile[], allocations:Map<string, number> ) {
+
+    return diff.map(file => {
+        const lines = file.block.split('\n');
+        const allocated = allocations.get(file.filename) ?? 0;
+        const keepHead = Math.ceil(allocated * 0.6);
+        const keepTail = Math.floor(allocated * 0.4);
+        let changedSeen = 0;
+        let headCut = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            if (/^[+-]/.test(lines[i]) && !/^(\+\+\+|---)/.test(lines[i])) {
+                changedSeen++;
+            }
+            if (changedSeen >= keepHead) {
+                headCut = i;
+                break;
+            }
+        }
+
+        changedSeen = 0;
+        let tailCut = lines.length - 1;
+
+        for (let i = lines.length - 1; i >= 0; i--) {
+            if (/^[+-]/.test(lines[i]) && !/^(\+\+\+|---)/.test(lines[i])) {
+                changedSeen++;
+            }
+            if (changedSeen >= keepTail) {
+                tailCut = i;
+                break;
+            }
+        }
+        
+
+        const head = lines.slice(0,headCut + 1);
+        const tail = lines.slice(tailCut);
+        const skipped = tailCut - headCut - 1;
+
+        return {
+            ...file,
+            block: `${head.join('\n')}\n[... ${skipped} lines skipped ...]\n${tail.join('\n')}`
+        }
+
+
+    })
+
+}
+
+function buildFileHeader(file: DiffFile): string {
+    if (file.isDeleted) return `${file.filename} [D]`;
+    if (file.isRenamed) return `${file.filename} [R:${file.renamedFrom}]`;
+    return file.filename;
+}
+
 /* ---------------------------------------------------------------
  | DiffFilesToString — converts array of diff files to cont. string
  | args: files(DiffFile[])
  | returns: string
  --------------------------------------------------------------- */
 export function diffFilesToString(files: DiffFile[]): string {
-  return files
-    .map(f => f.block.trim())
-    .join("\n\n");
+    return files
+        .map(f => {
+            const block = f.newHeader
+                ? `${buildFileHeader(f)}\n${f.block.trimEnd()}`
+                : f.block.trimEnd();
+            return block;
+        })
+        .join("\n\n");
 }
 
 //fun comment

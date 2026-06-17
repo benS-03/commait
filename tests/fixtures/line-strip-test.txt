@@ -1,0 +1,77 @@
+src/utils/math.ts
+@@ -1,14 +1,18 @@
+-    let total = 0
+-    for (const n of numbers) {
+-        total += n
+-    }
+-    return total / numbers.length
++    if (numbers.length === 0) {
++        return 0
++    }
++
++    const total = numbers.reduce(
++        (acc, current) => acc + current,
++        0
+[... -5 lines skipped ...]
++    }
++
++    const total = numbers.reduce(
++        (acc, current) => acc + current,
++        0
++    )
++
++    return total / numbers.length
+
+src/services/userService.ts
+@@ -5,25 +5,33 @@
+-    if (!user) {
+-        return null
+-    }
+-
+-    return {
+-        id: user.id,
+-        name: user.name,
+-        email: user.email
+-    }
++    return user
++        ? {
++              id: user.id,
+[... 9 lines skipped ...]
+-    logger.info('Deleted user', id)
++    logger.info(
++        'Deleted user',
++        {
++            id,
++            email: user.email
++        }
++    )
+
+src/components/Dashboard.tsx
+@@ -1,42 +1,62 @@
++    const [error, setError] = useState<string | null>(null)
+-        loadProjects()
++        void loadProjects()
+-        const data = await fetchProjects()
+-        setProjects(data)
+-        setLoading(false)
++        try {
++            setError(null)
++
++            const data = await fetchProjects()
++
++            setProjects(data)
++        } catch (err) {
++            setError(
++                err instanceof Error
++                    ? err.message
+[... 22 lines skipped ...]
++                <p>No projects found.</p>
++            ) : (
++                <ul>
++                    {projects.map((project) => (
++                        <li key={project.id}>
++                            {project.name}
++                        </li>
++                    ))}
++                </ul>
++            )}

@@ -1,0 +1,15 @@
+diff --git a/src/config.ts b/src/config.ts
+index 8f1d4e2..b7a9c1f 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -12,10 +12,12 @@ export interface Config {
++  editor: boolean;
+
++  editor: false,
+
+@@ -45,9 +47,12 @@ export function validateConfig(config: Config): void {
+
++  if (typeof config.editor !== "boolean") {
++    throw new Error("Editor must be a boolean");
++  }
++

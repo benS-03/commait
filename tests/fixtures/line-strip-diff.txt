@@ -1,0 +1,109 @@
+diff --git a/src/utils/math.ts b/src/utils/math.ts
+index 1234567..89abcde 100644
+--- a/src/utils/math.ts
++++ b/src/utils/math.ts
+@@ -1,14 +1,18 @@
+-    let total = 0
+-    for (const n of numbers) {
+-        total += n
+-    }
+-    return total / numbers.length
++    if (numbers.length === 0) {
++        return 0
++    }
++
++    const total = numbers.reduce(
++        (acc, current) => acc + current,
++        0
++    )
++
++    return total / numbers.length
+
+diff --git a/src/services/userService.ts b/src/services/userService.ts
+index 2222222..3333333 100644
+--- a/src/services/userService.ts
++++ b/src/services/userService.ts
+@@ -5,25 +5,33 @@
+-    if (!user) {
+-        return null
+-    }
+-
+-    return {
+-        id: user.id,
+-        name: user.name,
+-        email: user.email
+-    }
++    return user
++        ? {
++              id: user.id,
++              name: user.name,
++              email: user.email
++          }
++        : null
+@@ -40,12 +48,18 @@
+-        throw new Error('User not found')
++        throw new Error(
++            `User not found: ${id}`
++        )
+-    logger.info('Deleted user', id)
++    logger.info(
++        'Deleted user',
++        {
++            id,
++            email: user.email
++        }
++    )
+
+diff --git a/src/components/Dashboard.tsx b/src/components/Dashboard.tsx
+index 4444444..5555555 100644
+--- a/src/components/Dashboard.tsx
++++ b/src/components/Dashboard.tsx
+@@ -1,42 +1,62 @@
++    const [error, setError] = useState<string | null>(null)
+-        loadProjects()
++        void loadProjects()
+-        const data = await fetchProjects()
+-        setProjects(data)
+-        setLoading(false)
++        try {
++            setError(null)
++
++            const data = await fetchProjects()
++
++            setProjects(data)
++        } catch (err) {
++            setError(
++                err instanceof Error
++                    ? err.message
++                    : 'Unknown error'
++            )
++        } finally {
++            setLoading(false)
++        }
++    if (error) {
++        return (
++            <div>
++                Failed to load projects:
++                {' '}
++                {error}
++            </div>
++        )
++    }
+-            <ul>
+-                {projects.map((project) => (
+-                    <li key={project.id}>
+-                        {project.name}
+-                    </li>
+-                ))}
+-            </ul>
++            {projects.length === 0 ? (
++                <p>No projects found.</p>
++            ) : (
++                <ul>
++                    {projects.map((project) => (
++                        <li key={project.id}>
++                            {project.name}
++                        </li>
++                    ))}
++                </ul>
++            )}

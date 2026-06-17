@@ -1,0 +1,32 @@
+diff --git a/src/config.ts b/src/config.ts
+index 8f1d4e2..b7a9c1f 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -12,10 +12,12 @@ export interface Config {
+   provider: string;
+   model: string;
+   prompt: string;
++  editor: boolean;
+ }
+
+ export const DEFAULT_CONFIG: Config = {
+   provider: "openai",
+   model: "gpt-5",
+   prompt: DEFAULT_PROMPT,
++  editor: false,
+ };
+
+ export function validateConfig(config: Config): void {
+@@ -45,9 +47,12 @@ export function validateConfig(config: Config): void {
+   if (!config.model) {
+     throw new Error("Model is required");
+   }
+
++  if (typeof config.editor !== "boolean") {
++    throw new Error("Editor must be a boolean");
++  }
++
+   if (!config.prompt) {
+     throw new Error("Prompt is required");
+   }
+ }
