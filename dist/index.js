@@ -158,10 +158,12 @@ program.command("commit")
         }
     }
     // Pushing flow with auto and manual
+    console.log(config.auto_push);
     if (config.auto_push) {
         let remote = config.default_origin;
-        if (config.ask_origin)
+        if (config.ask_origin) {
             remote = await (0, commandPrompts_1.remotePrompt)();
+        }
         try {
             console.log("Pushing *************");
             await (0, git_1.pushChanges)(config.default_origin);

@@ -179,13 +179,15 @@ program.command("commit")
         }
     }
     // Pushing flow with auto and manual
+    console.log(config.auto_push)
     if (config.auto_push) {
         let remote: string = config.default_origin;
-        if (config.ask_origin)
+        if (config.ask_origin){
             remote = await remotePrompt();
+        }
         try{
             console.log("Pushing *************")
-        await pushChanges(config.default_origin);
+            await pushChanges(config.default_origin);
         }catch (err) {
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
