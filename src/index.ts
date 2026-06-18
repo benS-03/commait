@@ -185,7 +185,6 @@ program.command("commit")
             remote = await remotePrompt();
         }
         try{
-            console.log("Pushing *************")
             await pushChanges(config.default_origin);
         }catch (err) {
             if (err instanceof CommaitError) {
