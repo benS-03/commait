@@ -163,7 +163,6 @@ program.command("commit")
             remote = await (0, commandPrompts_1.remotePrompt)();
         }
         try {
-            console.log("Pushing *************");
             await (0, git_1.pushChanges)(config.default_origin);
         }
         catch (err) {
