@@ -163,7 +163,7 @@ program.command("commit")
         if (config.ask_origin)
             remote = await (0, commandPrompts_1.remotePrompt)();
         try {
-            (0, git_1.pushChanges)(config.default_origin);
+            await (0, git_1.pushChanges)(config.default_origin);
         }
         catch (err) {
             if (err instanceof errors_1.CommaitError) {
