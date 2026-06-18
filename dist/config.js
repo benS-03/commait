@@ -14,6 +14,7 @@ const fs_1 = __importDefault(require("fs"));
 require('dotenv').config();
 const aiPrompt_1 = require("./aiPrompt");
 const ai_1 = require("./ai");
+const errors_1 = require("./errors");
 exports.CONFIG_OPTIONS = {
     provider: {
         description: "AI provider to use",
@@ -27,13 +28,23 @@ exports.CONFIG_OPTIONS = {
         description: "Custom prompt for commit message generation",
         options: null,
     },
+    auto_stage: {
+        description: "Automatically stage all files before commit",
+        options: [
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false }
+        ]
+    },
     auto_commit: {
         description: "Commit without confirmation",
         options: [true, false],
     },
     auto_push: {
         description: "Push without confirmation",
-        options: [true, false],
+        options: [
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false }
+        ]
     },
     max_diff_tokens: {
         description: "Max tokens per diff before truncation",
@@ -45,7 +56,10 @@ exports.CONFIG_OPTIONS = {
     },
     ask_origin: {
         description: "Ask which remote to push to every time",
-        options: [true, false],
+        options: [
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false }
+        ]
     },
 };
 exports.CONFIG_PATH = path_1.default.join(os_1.default.homedir(), ".commait", "config.json");
@@ -72,6 +86,8 @@ function loadConfig() {
  --------------------------------------------------------------- */
 function configSet(key, value) {
     const config = loadConfig();
+    if (!(key in config))
+        throw new errors_1.ConfigError(`${key} is not a valid config option. Use "commait config option" to get full list`);
     config[key] = value;
     const jsonString = JSON.stringify(config, null, 2);
     fs_1.default.writeFileSync(exports.CONFIG_PATH, jsonString);
@@ -84,13 +100,14 @@ function configSet(key, value) {
  |       askOrigin(boolean)
  | returns: none
  --------------------------------------------------------------- */
-function saveConfig(provider, model, prompt, autoCommit = false, autoPush = false, max_diff_tokens = 12000, defOrigin = "origin", askOrigin = false) {
+function saveConfig(provider, model, prompt, autoStage = false, autoCommit = false, autoPush = false, max_diff_tokens = 12000, defOrigin = "origin", askOrigin = false) {
     fs_1.default.mkdirSync(path_1.default.dirname(exports.CONFIG_PATH), { recursive: true });
     // Manually build the config object instead of directly stringifying input
     const configToSave = {
         provider: provider,
         model: model,
         prompt: prompt,
+        auto_stage: autoStage,
         auto_commit: autoCommit,
         auto_push: autoPush,
         max_diff_tokens: max_diff_tokens,

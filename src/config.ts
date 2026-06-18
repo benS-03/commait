@@ -5,11 +5,13 @@ require('dotenv').config();
 import {commitMessagePrompt} from "./aiPrompt"
 import {DEFAULT_MODELS, MODEL_REGISTRY} from "./ai"
 import { getRemotes } from "./git";
+import { ConfigError } from "./errors";
 
 export type CommaitConfig = {
     provider: "openai" | "anthropic";
     model: string;
     prompt: string;
+    auto_stage: boolean,
     auto_commit: boolean;
     auto_push: boolean;
     max_diff_tokens: number;
@@ -36,13 +38,21 @@ export const CONFIG_OPTIONS: Record<string, ConfigOption> = {
     description: "Custom prompt for commit message generation",
     options: null,
   },
+  auto_stage: {
+    description: "Automatically stage all files before commit",
+    options: [
+      { name: "Enabled", value: true },
+      { name: "Disabled", value: false }]
+  },
   auto_commit: {
     description: "Commit without confirmation",
     options: [true, false],
   },
   auto_push: {
     description: "Push without confirmation",
-    options: [true, false],
+    options: [
+      { name: "Enabled", value: true },
+      { name: "Disabled", value: false }]
   },
   max_diff_tokens: {
     description: "Max tokens per diff before truncation",
@@ -54,7 +64,9 @@ export const CONFIG_OPTIONS: Record<string, ConfigOption> = {
   },
   ask_origin: {
     description: "Ask which remote to push to every time",
-    options: [true, false],
+    options: [
+      { name: "Enabled", value: true },
+      { name: "Disabled", value: false }]
   },
 };
 
@@ -90,7 +102,11 @@ export function loadConfig(){
 export function configSet(key: string, value: string) {
 
     const config = loadConfig();
-    config[key] = value;
+    
+    if (!(key in config)) throw new ConfigError(`${key} is not a valid config option. Use "commait config option" to get full list`)
+    
+     config[key] = value;
+
 
     const jsonString = JSON.stringify(config, null, 2);
 
@@ -106,7 +122,7 @@ export function configSet(key: string, value: string) {
  | returns: none
  --------------------------------------------------------------- */
 
-export function saveConfig(provider: string, model:string, prompt:string, autoCommit: boolean = false, autoPush: boolean = false, max_diff_tokens: number = 12000, defOrigin: string = "origin", askOrigin: boolean = false) {
+export function saveConfig(provider: string, model:string, prompt:string, autoStage: boolean = false, autoCommit: boolean = false, autoPush: boolean = false, max_diff_tokens: number = 12000, defOrigin: string = "origin", askOrigin: boolean = false) {
     fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
 
     // Manually build the config object instead of directly stringifying input
@@ -114,6 +130,7 @@ export function saveConfig(provider: string, model:string, prompt:string, autoCo
         provider: provider,
         model: model,
         prompt: prompt,
+        auto_stage: autoStage,
         auto_commit: autoCommit,
         auto_push: autoPush,
         max_diff_tokens: max_diff_tokens,

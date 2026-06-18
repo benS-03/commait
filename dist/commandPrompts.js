@@ -56,6 +56,15 @@ async function configInitPrompt() {
         },
         {
             type: "list",
+            name: "autoStage",
+            message: "Stage all files automatically before commit?",
+            choices: [
+                { name: "Auto Stage Enabled", value: true },
+                { name: "Auto Stage Disabled", value: false }
+            ]
+        },
+        {
+            type: "list",
             name: "autoCommit",
             message: "Commit without confirmation?",
             choices: [

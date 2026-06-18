@@ -4,7 +4,7 @@ import simpleGit from "simple-git";
 export const git = simpleGit();
 import {AIProvider} from "./ai"
 import { A } from "ollama/dist/shared/ollama.1bfa89da.cjs";
-
+import { DiffCompressionError, GitError } from "./errors"
 
 const AVG_TOKENS_PER_LINE: number = 10;
 const MAX_TRIM_ITERATIONS: number = 6;
@@ -82,13 +82,14 @@ const NOISE_PATTERNS: RegExp[] = [
  | returns: string
  --------------------------------------------------------------- */
 export async function getStagedDiff() {
-
     try{
         const diff = await git.diff(['--staged']);
+        if (diff == ""){
+            throw new GitError("Diff is empty. Did you stage your changed files?")
+        }
         return diff;
-    } catch (err) {
-        console.error("error getting diff")
-        return "failure";
+    } catch (err: any) {
+        throw new GitError(`Failed to get staged diff: ${err.message}`)
     }
 }
 /* ---------------------------------------------------------------
@@ -108,49 +109,37 @@ export function isGitRepo(): boolean {
         return false;
     }
 }
-/* ---------------------------------------------------------------
- | getRepoName — returns name of current repo
- | args: none
- | returns: string
- --------------------------------------------------------------- */
-export function getRepoName(): string{
 
-    try {
-        const url = execSync("git remote get-url origin")
-        .toString()
-        .trim();
-
-        return url;
-    } catch {
-
-    }
-
-    try {
-        const root = execSync("git rev-parse --show-toplevel")
-        .toString()
-        .trim();
-
-        return path.basename(root);
-    } catch {
-        return "unknown repo";
-    }
-
-
-}
 /* ---------------------------------------------------------------
  | getRemotes — returns list of git remotes
  | args: none
  | returns: string[]
  --------------------------------------------------------------- */
 export function getRemotes(): string[]{
-    const remotes = execSync("git remote", {encoding: "utf-8"})
-    .split("\n")
-    .map(r => r.trim())
-    .filter(Boolean);
+    try{
+        const remotes = execSync("git remote", {encoding: "utf-8"})
+        .split("\n")
+        .map(r => r.trim())
+        .filter(Boolean);
 
-    return remotes;
+        return remotes;
+    }catch(err: any) {
+        throw new GitError(`Failed to get list of remotes: ${err.message}`)
+    }
 }
 
+/* ---------------------------------------------------------------
+ | stageAll — stages all changes to git.
+ | args: none
+ | returns: none
+ --------------------------------------------------------------- */
+export async function stageAll(){
+    try {
+        await git.add("-A");
+    } catch (err: any) {
+        throw new GitError(`Failed to stage changes: ${err.message}`)
+    }
+}
 
 /* ---------------------------------------------------------------
  | commit — commits staged changes with given message
@@ -163,15 +152,10 @@ export async function commmit(message: string){
         await git.commit(message);
         console.log("Commit seccessful");
     } catch (err: any) {
-        console.error('RAW ERROR:', err.message);
-    if (err.message.includes('index.lock')) {
-        console.error('✖ Git is locked by another process.')
-        console.error('  Fix it by running: rm .git/index.lock')
-        process.exit(1)
-    }
-    // handle other errors
-    console.error('✖ Git error:', err.message)
-    process.exit(1)
+        if (err.message.includes('index.lock')) {
+            throw new GitError("Git is locked by another process.")
+        }
+        throw new GitError(`Failed git commit: ${err.message}`);
     }
 
 }
@@ -201,12 +185,10 @@ export async function commitWithRetry(
 
       // not a lock error, or out of retries
       if (isLock) {
-        console.error('✖ Git is locked by another process.')
-        console.error('  Fix it by running: rm .git/index.lock')
+        throw new GitError(`Git is locked by another process. Retried ${retries} times before exiting.`)
       } else {
-        console.error('✖ Git error:', err.message)
+        throw new GitError(`Failed to commit: ${err.message}`)
       }
-      process.exit(1)
     }
   }
 }
@@ -219,9 +201,8 @@ export async function commitWithRetry(
 export async function pushChanges(remote: string) {
     try {
         await git.push(remote);
-        console.log("Push successful");
-    } catch (err) {
-        console.error("Push Failed");
+    } catch (err: any) {
+        throw new GitError(`Failed to push changes: ${err.message}`);
     }
 }
 
@@ -310,7 +291,7 @@ export async function compressDiffToLimit(
     // Final Return Or Throw
     if (currentTok > limit) {
         console.log(`Diff is ${currentTok-limit} tokens greater than token limit`);
-        throw new Error("Supported diff reduction methods cannot reduce diff below token limt.")
+        throw new DiffCompressionError("Unable to compress diff below limit with supported methods.")
     } else {
         return {diff: diffFilesToString(files), log: log};
     }

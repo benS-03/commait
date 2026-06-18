@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getStagedDiff, isGitRepo, getRepoName, commmit, pushChanges, commitWithRetry, git, compressDiffToLimit, parseDiff, stripNoiseFiles, diffFilesToString } from "./git";
+import { getStagedDiff, stageAll, isGitRepo, commmit, pushChanges, commitWithRetry, git, compressDiffToLimit, parseDiff, stripNoiseFiles, diffFilesToString } from "./git";
 import {getProvider,AIProvider ,OpenAIProvider, AnthropicProvider} from "./ai"
 import { configSet, CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit, CONFIG_OPTIONS} from "./config";
 import { Command } from "commander";
@@ -13,6 +13,7 @@ import {edit} from "@inquirer/external-editor"
 
 import { testDiff } from "./testDiff";
 import { parse } from "node:path";
+import { CommaitError } from "./errors";
 
 
 const program = new Command();
@@ -29,14 +30,6 @@ program.command("commit")
 .option("--verbose", 'shows total token usage at end of commit')
 .action(async (options) => {
 
-    //======= Git Repo Check =======
-
-    if (isGitRepo())
-        console.log("Current repo:" + getRepoName());
-    else {
-        console.log("Not in git repo");
-        process.exit(1);
-    };
 
     //======= Data Loading, Variable Initialization =======
 
@@ -44,14 +37,33 @@ program.command("commit")
     let message: string = "";
     let tokens: number = 0;
     let cont: boolean= true;
-    let diff: string = await getStagedDiff();
+
+
+    if (config.auto_stage){
+        try {
+            stageAll();
+        } catch (err) {
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
+    }
+
+    let diff: string = "";
+
+    try {
+        diff = await getStagedDiff();
+    } catch (err) {
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+    }
 
     const provider: AIProvider= getProvider(config);
-    if (diff == "")
-    {
-        console.log("Empty diff, did you git add anything?");
-        process.exit(1);
-    }
+    
+    
     //fun comment
 
     //======= Pre Generation diff compression =======
@@ -72,11 +84,10 @@ program.command("commit")
             console.log(log);
         })
     } catch (err) {
-        if (err instanceof Error)
-            console.log(err.message);
-        else 
-            console.log(err);
-        process.exit(1);
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
     }
     //fun comment
     // ======= Main commit loop =======
@@ -92,12 +103,28 @@ program.command("commit")
 
             const context = await typePrompt("Enter context for generation");
             spinner.start();
+            let message: string = "";
+
+            try {
             message = await provider.generateCommitMessage(diff, context)
+            }catch (err) {
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
             spinner.succeed("Commit Message Generated")
         }
         else {
             spinner.start();
+            try {
             message = await provider.generateCommitMessage(diff);
+            }catch (err) {
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+                }
+            }
             spinner.succeed("Commit Message Generated")
 
         }
@@ -109,8 +136,15 @@ program.command("commit")
         // Auto commit
         if (config.auto_commit) {
             if (!options.dryRun)
+                try {
                 await commitWithRetry(git, message);
-            process.exit(1);
+                }catch (err) {
+                    if (err instanceof CommaitError) {
+                    console.error(`commait: ${err.message}`);
+                    process.exit(err.exitCode);
+                }
+            }
+            process.exit(0);
         }
 
 
@@ -123,7 +157,7 @@ program.command("commit")
         else if (answer.commitConfirm == 'r')
             cont = true;
         else
-            process.exit(1);
+            process.exit(0);
 
     }
 
@@ -135,22 +169,42 @@ program.command("commit")
     }
     //Dry
     if (!options.dryRun){
+        try {
         commitWithRetry(git, message);
+        }catch (err) {
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
     }
     // Pushing flow with auto and manual
     if (config.auto_push) {
-
+        let remote: string = config.default_origin;
         if (config.ask_origin)
-            pushChanges(await remotePrompt());
-        else 
-            pushChanges(config.default_origin);
+            remote = await remotePrompt();
+        try{
+        pushChanges(config.default_origin);
+        }catch (err) {
+            if (err instanceof CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
     }
     else if (await ynListPrompt("Would you like to push changes?")){
         if (!options.dryRun){
+            let remote: string = config.default_origin;
             if (config.ask_origin)
-                pushChanges(await remotePrompt());
-            else
+                remote = await remotePrompt();
+            try{
                 pushChanges(config.default_origin);
+            }catch (err) {
+                if (err instanceof CommaitError) {
+                    console.error(`commait: ${err.message}`);
+                    process.exit(err.exitCode);
+                }
+            }
         }
     }
 
@@ -168,10 +222,18 @@ program.command("push")
     console.log("Pushing Changes");
     const config = loadConfig();
     // auto remote or not.
+    let remote: string = config.default_origin;
     if (config.ask_origin)
-        pushChanges(await remotePrompt());
-    else
+        remote = await remotePrompt();
+    try{
         pushChanges(config.default_origin);
+    }catch (err) {
+        if (err instanceof CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
+    }
+        
 })
 
 // fun comment
@@ -225,9 +287,14 @@ config.command("set [key] [value]")
     if (!value) {
         value = await configValuePrompt(key);
     }
-
-    configSet(key,value)
-})
+    try{
+        configSet(key,value)
+    }catch (err) {
+        if (err instanceof CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
+}})
 
 // ======= Display All Config Keys =======
 

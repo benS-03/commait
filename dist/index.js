@@ -12,6 +12,7 @@ const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
 const ora_1 = __importDefault(require("ora"));
 const external_editor_1 = require("@inquirer/external-editor");
+const errors_1 = require("./errors");
 const program = new commander_1.Command();
 program.name("commait").description("AI-powered commit message generator").version("1.0.0");
 // ======= COMMIT COMMANDS =======
@@ -23,25 +24,33 @@ program.command("commit")
     .option('--strip-noise', 'strips noise files from diff')
     .option("--verbose", 'shows total token usage at end of commit')
     .action(async (options) => {
-    //======= Git Repo Check =======
-    if ((0, git_1.isGitRepo)())
-        console.log("Current repo:" + (0, git_1.getRepoName)());
-    else {
-        console.log("Not in git repo");
-        process.exit(1);
-    }
-    ;
     //======= Data Loading, Variable Initialization =======
     const config = (0, config_1.loadConfig)();
     let message = "";
     let tokens = 0;
     let cont = true;
-    let diff = await (0, git_1.getStagedDiff)();
-    const provider = (0, ai_1.getProvider)(config);
-    if (diff == "") {
-        console.log("Empty diff, did you git add anything?");
-        process.exit(1);
+    if (config.auto_stage) {
+        try {
+            (0, git_1.stageAll)();
+        }
+        catch (err) {
+            if (err instanceof errors_1.CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
     }
+    let diff = "";
+    try {
+        diff = await (0, git_1.getStagedDiff)();
+    }
+    catch (err) {
+        if (err instanceof errors_1.CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
+    }
+    const provider = (0, ai_1.getProvider)(config);
     //fun comment
     //======= Pre Generation diff compression =======
     // Option to force compression
@@ -61,11 +70,10 @@ program.command("commit")
         });
     }
     catch (err) {
-        if (err instanceof Error)
-            console.log(err.message);
-        else
-            console.log(err);
-        process.exit(1);
+        if (err instanceof errors_1.CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
     }
     //fun comment
     // ======= Main commit loop =======
@@ -79,12 +87,29 @@ program.command("commit")
         if (options.context) {
             const context = await (0, commandPrompts_1.typePrompt)("Enter context for generation");
             spinner.start();
-            message = await provider.generateCommitMessage(diff, context);
+            let message = "";
+            try {
+                message = await provider.generateCommitMessage(diff, context);
+            }
+            catch (err) {
+                if (err instanceof errors_1.CommaitError) {
+                    console.error(`commait: ${err.message}`);
+                    process.exit(err.exitCode);
+                }
+            }
             spinner.succeed("Commit Message Generated");
         }
         else {
             spinner.start();
-            message = await provider.generateCommitMessage(diff);
+            try {
+                message = await provider.generateCommitMessage(diff);
+            }
+            catch (err) {
+                if (err instanceof errors_1.CommaitError) {
+                    console.error(`commait: ${err.message}`);
+                    process.exit(err.exitCode);
+                }
+            }
             spinner.succeed("Commit Message Generated");
         }
         // Token tracking and response loggin ( needs work)
@@ -94,8 +119,16 @@ program.command("commit")
         // Auto commit
         if (config.auto_commit) {
             if (!options.dryRun)
-                await (0, git_1.commitWithRetry)(git_1.git, message);
-            process.exit(1);
+                try {
+                    await (0, git_1.commitWithRetry)(git_1.git, message);
+                }
+                catch (err) {
+                    if (err instanceof errors_1.CommaitError) {
+                        console.error(`commait: ${err.message}`);
+                        process.exit(err.exitCode);
+                    }
+                }
+            process.exit(0);
         }
         //Prompt to commit or regenerate
         const answer = await (0, commandPrompts_1.confirmCommit)();
@@ -105,7 +138,7 @@ program.command("commit")
         else if (answer.commitConfirm == 'r')
             cont = true;
         else
-            process.exit(1);
+            process.exit(0);
     }
     // ======= Optional Editing and Other =======
     //Editing of commmit
@@ -114,21 +147,45 @@ program.command("commit")
     }
     //Dry
     if (!options.dryRun) {
-        (0, git_1.commitWithRetry)(git_1.git, message);
+        try {
+            (0, git_1.commitWithRetry)(git_1.git, message);
+        }
+        catch (err) {
+            if (err instanceof errors_1.CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
     }
     // Pushing flow with auto and manual
     if (config.auto_push) {
+        let remote = config.default_origin;
         if (config.ask_origin)
-            (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
-        else
+            remote = await (0, commandPrompts_1.remotePrompt)();
+        try {
             (0, git_1.pushChanges)(config.default_origin);
+        }
+        catch (err) {
+            if (err instanceof errors_1.CommaitError) {
+                console.error(`commait: ${err.message}`);
+                process.exit(err.exitCode);
+            }
+        }
     }
     else if (await (0, commandPrompts_1.ynListPrompt)("Would you like to push changes?")) {
         if (!options.dryRun) {
+            let remote = config.default_origin;
             if (config.ask_origin)
-                (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
-            else
+                remote = await (0, commandPrompts_1.remotePrompt)();
+            try {
                 (0, git_1.pushChanges)(config.default_origin);
+            }
+            catch (err) {
+                if (err instanceof errors_1.CommaitError) {
+                    console.error(`commait: ${err.message}`);
+                    process.exit(err.exitCode);
+                }
+            }
         }
     }
     if (options.verbose) {
@@ -143,10 +200,18 @@ program.command("push")
     console.log("Pushing Changes");
     const config = (0, config_1.loadConfig)();
     // auto remote or not.
+    let remote = config.default_origin;
     if (config.ask_origin)
-        (0, git_1.pushChanges)(await (0, commandPrompts_1.remotePrompt)());
-    else
+        remote = await (0, commandPrompts_1.remotePrompt)();
+    try {
         (0, git_1.pushChanges)(config.default_origin);
+    }
+    catch (err) {
+        if (err instanceof errors_1.CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
+    }
 });
 // fun comment
 // ohmy god another fun comment
@@ -189,7 +254,15 @@ config.command("set [key] [value]")
     if (!value) {
         value = await (0, commandPrompts_1.configValuePrompt)(key);
     }
-    (0, config_1.configSet)(key, value);
+    try {
+        (0, config_1.configSet)(key, value);
+    }
+    catch (err) {
+        if (err instanceof errors_1.CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
+    }
 });
 // ======= Display All Config Keys =======
 config.command("options")

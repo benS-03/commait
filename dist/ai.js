@@ -3,13 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OllamaProvider = exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = exports.MODEL_REGISTRY = void 0;
+exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = exports.MODEL_REGISTRY = void 0;
 exports.getProvider = getProvider;
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 require('dotenv').config();
 const tiktoken_1 = require("tiktoken");
-const ollama_1 = require("ollama");
+const errors_1 = require("./errors");
 exports.MODEL_REGISTRY = {
     openai: [
         "gpt-4.1-nano", // Ultra fast/cheap option
@@ -50,30 +50,40 @@ class OpenAIProvider {
         this.model = "gpt-4o-mini";
         const key = process.env.OPENAI_API_KEY;
         if (!key) {
-            throw new Error("Missing openai Key");
+            throw new errors_1.AiProviderError("Missing OpenAI API Key.");
         }
-        this.client = new openai_1.default({ apiKey: key });
+        try {
+            this.client = new openai_1.default({ apiKey: key });
+        }
+        catch (err) {
+            throw new errors_1.AiProviderError(`Failed to construct OpenAi provider with API Key: ${err.message}`);
+        }
         this.model = config.model;
         this.prompt = config.prompt;
     }
     async generateCommitMessage(diff, context = "") {
         let contextMessage = "";
         if (context) {
-            contextMessage = `Consider this user provided constext ${context}\n`;
+            contextMessage = `Consider this user provided context ${context}\n`;
         }
-        const res = await this.client.chat.completions.create({
-            model: this.model,
-            messages: [{
-                    role: "system",
-                    content: contextMessage + this.prompt,
-                },
-                {
-                    role: "user",
-                    content: diff,
-                },
-            ],
-        });
-        return res.choices[0].message.content ?? "";
+        try {
+            const res = await this.client.chat.completions.create({
+                model: this.model,
+                messages: [{
+                        role: "system",
+                        content: contextMessage + this.prompt,
+                    },
+                    {
+                        role: "user",
+                        content: diff,
+                    },
+                ],
+            });
+            return res.choices[0].message.content ?? "";
+        }
+        catch (err) {
+            throw new errors_1.AiProviderError(`Error requesting OpenAi message generation: ${err.message}`);
+        }
     }
     async countInputTokens(diff) {
         const enc = (0, tiktoken_1.encoding_for_model)(this.model);
@@ -108,39 +118,55 @@ class AnthropicProvider {
     constructor(config) {
         const key = process.env.ANTHROPIC_API_KEY;
         if (!key) {
-            throw new Error("Missing anthropic Key");
+            throw new errors_1.AiProviderError("Missing Anthropic API Key");
         }
-        this.client = new sdk_1.default({ apiKey: key });
-        ;
+        try {
+            this.client = new sdk_1.default({ apiKey: key });
+        }
+        catch (err) {
+            throw new errors_1.AiProviderError(`Failed to construct Anthropic provider with API Key: ${err.message}`);
+        }
         this.model = config.model;
         this.prompt = config.prompt;
     }
     async generateCommitMessage(diff, context = "") {
         let contextMessage = "";
         if (context) {
-            contextMessage = `Consider this user provided constext ${context}\n`;
+            contextMessage = `Consider this user provided context ${context}\n`;
         }
-        const res = await this.client.messages.create({
-            model: this.model,
-            max_tokens: 200,
-            messages: [
-                {
-                    role: "user",
-                    content: `${contextMessage}\n\n${this.prompt} \n\n ${diff}`,
-                },
-            ],
-        });
+        let res;
+        try {
+            res = await this.client.messages.create({
+                model: this.model,
+                max_tokens: 200,
+                messages: [
+                    {
+                        role: "user",
+                        content: `${contextMessage}\n\n${this.prompt} \n\n ${diff}`,
+                    },
+                ],
+            });
+        }
+        catch (err) {
+            throw new errors_1.AiProviderError(`Failed Anthropic message generation request: ${err.message}`);
+        }
         return res.content
             .filter((block) => block.type === "text")
             .map((block) => block.text)
             .join("");
     }
     async countInputTokens(diff) {
-        const res = await this.client.messages.countTokens({
-            model: this.model,
-            system: this.prompt,
-            messages: [{ role: "user", content: diff }]
-        });
+        let res;
+        try {
+            res = await this.client.messages.countTokens({
+                model: this.model,
+                system: this.prompt,
+                messages: [{ role: "user", content: diff }]
+            });
+        }
+        catch (err) {
+            throw new errors_1.AiProviderError(`Failed Anthropic token count request: ${err.message}`);
+        }
         return res.input_tokens;
     }
     async getModels() {
@@ -165,41 +191,43 @@ exports.AnthropicProvider = AnthropicProvider;
  |   countInputTokens(diff:string) - returns token count for string
  |   getModel() - returns list of usable models
  --------------------------------------------------------------- */
-class OllamaProvider {
-    constructor(config) {
-        this.client = new ollama_1.Ollama({ host: "http://localhost:11434" });
-        this.prompt = config.prompt;
-        this.model = config.model;
-    }
-    async generateCommitMessage(diff, context) {
-        let contextMessage = "";
-        if (context) {
-            contextMessage = `Consider this user provided constext ${context}\n`;
-        }
-        const res = await this.client.chat({
-            model: this.model,
-            messages: [
-                {
-                    role: "system",
-                    content: contextMessage + this.prompt,
-                },
-                {
-                    role: "user",
-                    content: `Write a commit message for this diff:\n\n${diff}`,
-                },
-            ]
-        });
-        return res.message.content.trim();
-    }
-    async countInputTokens(diff) {
-        return Math.ceil(diff.length / 4);
-    }
-    async getModels() {
-        const models = await this.client.list();
-        return ["NOT IMPLEMENTED"];
-    }
-}
-exports.OllamaProvider = OllamaProvider;
+// export class OllamaProvider implements AIProvider{
+//     private client: Ollama;
+//     private prompt:string;
+//     private model: string;
+//     constructor(config: CommaitConfig) {
+//         this.client = new Ollama({ host: "http://localhost:11434"});
+//         this.prompt = config.prompt;
+//         this.model = config.model;
+//     }
+//     async generateCommitMessage(diff: string, context: string): Promise<string> {
+//         let contextMessage = "";
+//         if (context){
+//             contextMessage = `Consider this user provided constext ${context}\n`
+//         } 
+//         const res = await this.client.chat({
+//             model: this.model,
+//             messages: [
+//                 {
+//                     role: "system",
+//                     content: contextMessage + this.prompt,
+//                 },
+//                 {
+//                     role: "user",
+//                     content: `Write a commit message for this diff:\n\n${diff}`,
+//                 },
+//             ]
+//         });
+//         return res.message.content.trim();
+//     }
+//     async countInputTokens(diff: string) {
+//         return Math.ceil(diff.length / 4);
+//     }
+//     async getModels(): Promise<string[]> {
+//         const models = await this.client.list();
+//         return ["NOT IMPLEMENTED"]
+//     }
+// }
 /* ---------------------------------------------------------------
  | getProvider — gives provider given config
  | args: config(CommaitConfig)
@@ -212,6 +240,6 @@ function getProvider(config) {
         case "openai":
             return new OpenAIProvider(config);
         default:
-            throw new Error("Unsupported provider");
+            throw new errors_1.AiProviderError(`Unsupported provider: ${config.provider}`);
     }
 }
