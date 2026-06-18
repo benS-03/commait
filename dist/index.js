@@ -31,7 +31,7 @@ program.command("commit")
     let cont = true;
     if (config.auto_stage) {
         try {
-            (0, git_1.stageAll)();
+            await (0, git_1.stageAll)();
         }
         catch (err) {
             if (err instanceof errors_1.CommaitError) {
@@ -229,7 +229,7 @@ config.command("init")
     else {
         prompt = answers.prompt;
     }
-    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
+    (0, config_1.saveConfig)(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoStage, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
 // ======= Get user Config Command =======
 config.command("get")

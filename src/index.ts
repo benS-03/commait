@@ -41,7 +41,7 @@ program.command("commit")
 
     if (config.auto_stage){
         try {
-            stageAll();
+            await stageAll();
         } catch (err) {
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
@@ -256,7 +256,7 @@ if (answers.prompt == "") {
 else {
     prompt = answers.prompt;
 }
-saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
+saveConfig(answers.provider, answers.openaiModel ?? answers.anthropicModel, prompt, answers.autoStage, answers.autoCommit, answers.autoPush, answers.maxTokens, answers.defRemote, answers.askOrigin);
 });
 
 // ======= Get user Config Command =======
