@@ -144,7 +144,6 @@ program.command("commit")
                     process.exit(err.exitCode);
                 }
             }
-            process.exit(0);
         }
 
 
@@ -179,7 +178,7 @@ program.command("commit")
         }
     }
     // Pushing flow with auto and manual
-    console.log(config.auto_push)
+    
     if (config.auto_push) {
         let remote: string = config.default_origin;
         if (config.ask_origin){

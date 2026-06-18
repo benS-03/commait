@@ -128,7 +128,6 @@ program.command("commit")
                         process.exit(err.exitCode);
                     }
                 }
-            process.exit(0);
         }
         //Prompt to commit or regenerate
         const answer = await (0, commandPrompts_1.confirmCommit)();
@@ -158,7 +157,6 @@ program.command("commit")
         }
     }
     // Pushing flow with auto and manual
-    console.log(config.auto_push);
     if (config.auto_push) {
         let remote = config.default_origin;
         if (config.ask_origin) {
