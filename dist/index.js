@@ -142,6 +142,7 @@ program.command("commit")
             if (!options.dryRun)
                 try {
                     await (0, git_1.commitWithRetry)(git_1.git, message);
+                    cont = false;
                 }
                 catch (err) {
                     if (err instanceof errors_1.CommaitError) {

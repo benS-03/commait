@@ -155,6 +155,7 @@ program.command("commit")
             if (!options.dryRun)
                 try {
                 await commitWithRetry(git, message);
+                cont = false;
                 }catch (err) {
                     if (err instanceof CommaitError) {
                     console.error(`commait: ${err.message}`);
