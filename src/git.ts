@@ -3,7 +3,6 @@ import path, { parse } from "path";
 import simpleGit from "simple-git";
 export const git = simpleGit();
 import {AIProvider} from "./ai"
-import { A } from "ollama/dist/shared/ollama.1bfa89da.cjs";
 import { DiffCompressionError, GitError } from "./errors"
 
 const AVG_TOKENS_PER_LINE: number = 10;
@@ -141,24 +140,6 @@ export async function stageAll(){
     }
 }
 
-/* ---------------------------------------------------------------
- | commit — commits staged changes with given message
- | args: message(string)
- | returns: none
- --------------------------------------------------------------- */
-export async function commmit(message: string){
-
-    try {
-        await git.commit(message);
-        console.log("Commit seccessful");
-    } catch (err: any) {
-        if (err.message.includes('index.lock')) {
-            throw new GitError("Git is locked by another process.")
-        }
-        throw new GitError(`Failed git commit: ${err.message}`);
-    }
-
-}
 /* ---------------------------------------------------------------
  | commitWithRetry — attempts to commit a given # of times with given delay in between attempts
  | args: git(SimpleGit), message(string), retries(number), delayMs(number)

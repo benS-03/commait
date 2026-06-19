@@ -8,7 +8,6 @@ exports.getStagedDiff = getStagedDiff;
 exports.isGitRepo = isGitRepo;
 exports.getRemotes = getRemotes;
 exports.stageAll = stageAll;
-exports.commmit = commmit;
 exports.commitWithRetry = commitWithRetry;
 exports.pushChanges = pushChanges;
 exports.compressDiffToLimit = compressDiffToLimit;
@@ -143,23 +142,6 @@ async function stageAll() {
     }
     catch (err) {
         throw new errors_1.GitError(`Failed to stage changes: ${err.message}`);
-    }
-}
-/* ---------------------------------------------------------------
- | commit — commits staged changes with given message
- | args: message(string)
- | returns: none
- --------------------------------------------------------------- */
-async function commmit(message) {
-    try {
-        await exports.git.commit(message);
-        console.log("Commit seccessful");
-    }
-    catch (err) {
-        if (err.message.includes('index.lock')) {
-            throw new errors_1.GitError("Git is locked by another process.");
-        }
-        throw new errors_1.GitError(`Failed git commit: ${err.message}`);
     }
 }
 /* ---------------------------------------------------------------

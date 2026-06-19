@@ -37,7 +37,10 @@ exports.CONFIG_OPTIONS = {
     },
     auto_commit: {
         description: "Commit without confirmation",
-        options: [true, false],
+        options: [
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false }
+        ]
     },
     auto_push: {
         description: "Push without confirmation",

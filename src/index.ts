@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getStagedDiff, stageAll, isGitRepo, commmit, pushChanges, commitWithRetry, git, compressDiffToLimit, parseDiff, stripNoiseFiles, diffFilesToString } from "./git";
+import { getStagedDiff, stageAll, isGitRepo, pushChanges, commitWithRetry, git, compressDiffToLimit, parseDiff, stripNoiseFiles, diffFilesToString } from "./git";
 import {getProvider,AIProvider ,OpenAIProvider, AnthropicProvider} from "./ai"
 import { configSet, CONFIG_PATH,CommaitConfig,saveConfig, loadConfig, configAutoInit, CONFIG_OPTIONS} from "./config";
 import { Command } from "commander";
@@ -11,7 +11,7 @@ import { configKeysPrompt,configInitPrompt, ynListPrompt, confirmContinue, confi
 import ora from "ora";
 import {edit} from "@inquirer/external-editor"
 
-import { testDiff } from "./testDiff";
+
 import { parse } from "node:path";
 import { CommaitError } from "./errors";
 
@@ -46,6 +46,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+            }else {
+                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                process.exit(1);
             }
         }
     }
@@ -58,6 +61,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+            }else {
+                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                process.exit(1);
             }
     }
 
@@ -87,6 +93,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+            }else {
+                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                process.exit(1);
             }
     }
     //fun comment
@@ -111,6 +120,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+            }else {
+                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                process.exit(1);
             }
         }
             spinner.succeed("Commit Message Generated")
@@ -123,6 +135,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+                }else {
+                    console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                    process.exit(1);
                 }
             }
             spinner.succeed("Commit Message Generated")
@@ -142,6 +157,9 @@ program.command("commit")
                     if (err instanceof CommaitError) {
                     console.error(`commait: ${err.message}`);
                     process.exit(err.exitCode);
+                }else {
+                    console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                    process.exit(1);
                 }
             }
         }
@@ -174,6 +192,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+            }else {
+                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                process.exit(1);
             }
         }
     }
@@ -190,6 +211,9 @@ program.command("commit")
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
                 process.exit(err.exitCode);
+            }else {
+                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                process.exit(1);
             }
         }
     }
@@ -204,6 +228,9 @@ program.command("commit")
                 if (err instanceof CommaitError) {
                     console.error(`commait: ${err.message}`);
                     process.exit(err.exitCode);
+                }else {
+                    console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+                    process.exit(1);
                 }
             }
         }
@@ -232,13 +259,14 @@ program.command("push")
         if (err instanceof CommaitError) {
             console.error(`commait: ${err.message}`);
             process.exit(err.exitCode);
+        }else {
+            console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+            process.exit(1);
         }
     }
         
 })
 
-// fun comment
-// ohmy god another fun comment
 
 // ======= Config Commands =======
 
@@ -279,21 +307,24 @@ config.command("loc")
 
 // ======= Set specific values in config =======
 
-config.command("set [key] [value]")
+config.command("set [key]")
 .description("Set Individual config values")
-.action(async (key, value) => {
+.action(async (key) => {
     if (!key) {
         key = await configKeysPrompt();
     }
-    if (!value) {
-        value = await configValuePrompt(key);
-    }
+    
+    const value = await configValuePrompt(key);
+
     try{
         configSet(key,value)
     }catch (err) {
         if (err instanceof CommaitError) {
             console.error(`commait: ${err.message}`);
             process.exit(err.exitCode);
+        }else {
+            console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+            process.exit(1);
         }
 }})
 
