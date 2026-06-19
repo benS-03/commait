@@ -273,6 +273,3 @@ config.command("options")
     });
 });
 program.parse();
-
-
-//fun comment
