@@ -3,7 +3,6 @@ import Anthropic from "@anthropic-ai/sdk"
 require('dotenv').config();
 import { encoding_for_model } from "tiktoken";
 import {loadConfig, CommaitConfig } from "./config";
-import { Ollama } from "ollama";
 import {AiProviderError} from "./errors"
 
 
@@ -189,7 +188,7 @@ export class AnthropicProvider implements AIProvider {
     }
 
     async getModels(): Promise<string[]> {
-        return Array.from(MODEL_REGISTRY.openai);
+        return Array.from(MODEL_REGISTRY.anthropic);
     }
 }
 /* ---------------------------------------------------------------

@@ -10,6 +10,8 @@ import { push } from "node:stream/iter";
 import { configKeysPrompt,configInitPrompt, ynListPrompt, confirmContinue, confirmCommit, typePrompt, remotePrompt, configValuePrompt} from "./commandPrompts";
 import ora from "ora";
 import {edit} from "@inquirer/external-editor"
+import pkg from "../package.json";
+
 
 
 import { parse } from "node:path";
@@ -17,7 +19,7 @@ import { CommaitError } from "./errors";
 
 
 const program = new Command();
-program.name("commait").description("AI-powered commit message generator").version("1.0.0");
+program.name("commait").description("AI-powered commit message generator").version(pkg.version);
 
 // ======= COMMIT COMMANDS =======
 
@@ -162,19 +164,18 @@ program.command("commit")
                     process.exit(1);
                 }
             }
+        }else {
+            //Prompt to commit or regenerate
+            const answer = await confirmCommit();
+
+            // Flag logic for regeneration
+            if (answer.commitConfirm == 'y')
+                cont = false;
+            else if (answer.commitConfirm == 'r')
+                cont = true;
+            else
+                process.exit(0);
         }
-
-
-        //Prompt to commit or regenerate
-        const answer = await confirmCommit();
-
-        // Flag logic for regeneration
-        if (answer.commitConfirm == 'y')
-            cont = false;
-        else if (answer.commitConfirm == 'r')
-            cont = true;
-        else
-            process.exit(0);
 
     }
 
@@ -223,7 +224,7 @@ program.command("commit")
             if (config.ask_origin)
                 remote = await remotePrompt();
             try{
-                pushChanges(config.default_origin);
+                await pushChanges(config.default_origin);
             }catch (err) {
                 if (err instanceof CommaitError) {
                     console.error(`commait: ${err.message}`);
@@ -254,7 +255,7 @@ program.command("push")
     if (config.ask_origin)
         remote = await remotePrompt();
     try{
-        pushChanges(config.default_origin);
+        await pushChanges(config.default_origin);
     }catch (err) {
         if (err instanceof CommaitError) {
             console.error(`commait: ${err.message}`);
@@ -313,9 +314,18 @@ config.command("set [key]")
     if (!key) {
         key = await configKeysPrompt();
     }
-    
-    const value = await configValuePrompt(key);
-
+    let value;
+    try{
+        value = await configValuePrompt(key);
+    }catch(err){
+        if (err instanceof CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }else {
+            console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+            process.exit(1);
+        }
+    }
     try{
         configSet(key,value)
     }catch (err) {

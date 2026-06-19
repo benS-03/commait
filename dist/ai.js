@@ -170,7 +170,7 @@ class AnthropicProvider {
         return res.input_tokens;
     }
     async getModels() {
-        return Array.from(exports.MODEL_REGISTRY.openai);
+        return Array.from(exports.MODEL_REGISTRY.anthropic);
     }
 }
 exports.AnthropicProvider = AnthropicProvider;

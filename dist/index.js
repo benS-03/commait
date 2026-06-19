@@ -12,9 +12,10 @@ const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
 const ora_1 = __importDefault(require("ora"));
 const external_editor_1 = require("@inquirer/external-editor");
+const package_json_1 = __importDefault(require("../package.json"));
 const errors_1 = require("./errors");
 const program = new commander_1.Command();
-program.name("commait").description("AI-powered commit message generator").version("1.0.0");
+program.name("commait").description("AI-powered commit message generator").version(package_json_1.default.version);
 // ======= COMMIT COMMANDS =======
 program.command("commit")
     .description("Generate Message, commit locally, and optionally push changes")
@@ -153,15 +154,17 @@ program.command("commit")
                     }
                 }
         }
-        //Prompt to commit or regenerate
-        const answer = await (0, commandPrompts_1.confirmCommit)();
-        // Flag logic for regeneration
-        if (answer.commitConfirm == 'y')
-            cont = false;
-        else if (answer.commitConfirm == 'r')
-            cont = true;
-        else
-            process.exit(0);
+        else {
+            //Prompt to commit or regenerate
+            const answer = await (0, commandPrompts_1.confirmCommit)();
+            // Flag logic for regeneration
+            if (answer.commitConfirm == 'y')
+                cont = false;
+            else if (answer.commitConfirm == 'r')
+                cont = true;
+            else
+                process.exit(0);
+        }
     }
     // ======= Optional Editing and Other =======
     //Editing of commmit
@@ -210,7 +213,7 @@ program.command("commit")
             if (config.ask_origin)
                 remote = await (0, commandPrompts_1.remotePrompt)();
             try {
-                (0, git_1.pushChanges)(config.default_origin);
+                await (0, git_1.pushChanges)(config.default_origin);
             }
             catch (err) {
                 if (err instanceof errors_1.CommaitError) {
@@ -240,7 +243,7 @@ program.command("push")
     if (config.ask_origin)
         remote = await (0, commandPrompts_1.remotePrompt)();
     try {
-        (0, git_1.pushChanges)(config.default_origin);
+        await (0, git_1.pushChanges)(config.default_origin);
     }
     catch (err) {
         if (err instanceof errors_1.CommaitError) {
@@ -289,7 +292,20 @@ config.command("set [key]")
     if (!key) {
         key = await (0, commandPrompts_1.configKeysPrompt)();
     }
-    const value = await (0, commandPrompts_1.configValuePrompt)(key);
+    let value;
+    try {
+        value = await (0, commandPrompts_1.configValuePrompt)(key);
+    }
+    catch (err) {
+        if (err instanceof errors_1.CommaitError) {
+            console.error(`commait: ${err.message}`);
+            process.exit(err.exitCode);
+        }
+        else {
+            console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
+            process.exit(1);
+        }
+    }
     try {
         (0, config_1.configSet)(key, value);
     }

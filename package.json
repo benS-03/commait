@@ -1,19 +1,27 @@
 {
   "name": "commait",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI-powered git commit tool",
+  "bin": {
+    "commait": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
   "scripts": {
     "build": "tsc",
     "test": "vitest",
     "test:watch": "vitest --watch"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/benS-03/commait.git"
   },
   "keywords": [],
+  "engines": {
+    "node": ">=18"
+  },
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -26,19 +34,13 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   },
-  "bin": {
-    "commait": "./dist/index.js"
-  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
     "@inquirer/external-editor": "^3.0.3",
     "@types/inquirer": "^9.0.9",
     "commander": "^14.0.3",
     "dotenv": "^17.4.2",
-    "external-editor": "^1.1.1",
-    "fs": "^0.0.1-security",
     "inquirer": "^8.2.7",
-    "ollama": "^0.6.3",
     "openai": "^6.38.0",
     "ora": "^9.4.0",
     "simple-git": "^3.36.0",
