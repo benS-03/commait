@@ -121,8 +121,8 @@ program.command("commit")
         }
         // Token tracking and response loggin ( needs work)
         tokens += await provider.countInputTokens(diff);
-        console.log("===========COMMIT MESSAGE===========");
-        console.log(message);
+        console.log("\n\n===========COMMIT MESSAGE===========\n");
+        console.log(message, "\n====================================\n");
         // Auto commit
         if (config.auto_commit) {
             if (!options.dryRun)

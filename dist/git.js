@@ -188,7 +188,7 @@ async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
  --------------------------------------------------------------- */
 async function pushChanges(remote) {
     const spinner = (0, ora_1.default)({
-        text: "Compressing diff below token budget",
+        text: "Pushing Local Commit",
         spinner: "flip",
         color: "green"
     }).start();
