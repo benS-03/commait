@@ -1,8 +1,8 @@
 Output dev/commait/demo/demo.gif
-Set FontSize 12
-Set Width 120
-Set Height 30
-Set Padding 5
+Set FontSize 16
+Set Width 800
+Set Height 400
+Set Padding 20
 Set TypingSpeed 60ms
 Set Theme Dracula
 
