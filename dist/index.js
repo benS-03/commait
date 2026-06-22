@@ -26,7 +26,6 @@ program.command("commit")
     .option('--dry-run', 'run without commit or pushing')
     .option('-e, --edit', 'edit message before commit')
     .option('-c, --context', 'allows addition of further context')
-    .option('--strip-noise', 'strips noise files from diff')
     .option("--verbose", 'shows total token usage at end of commit')
     .action(async (options) => {
     //======= Data Loading, Variable Initialization =======
@@ -66,14 +65,6 @@ program.command("commit")
     const provider = (0, ai_1.getProvider)(config);
     //fun comment
     //======= Pre Generation diff compression =======
-    // Option to force compression
-    if (options.stripNoise) {
-        console.log(`diff length: ${diff.length}`);
-        const parsed = (0, git_1.parseDiff)(diff);
-        const stripped = (0, git_1.stripNoiseFiles)(parsed);
-        diff = (0, git_1.diffFilesToString)(stripped);
-        console.log(`diff lenght ${diff.length}`);
-    }
     //Compression
     let compressionLog;
     try {
@@ -169,22 +160,6 @@ program.command("commit")
     //Editing of commmit
     if (options.edit) {
         message = (0, external_editor_1.edit)(message);
-    }
-    //Dry
-    if (!options.dryRun) {
-        try {
-            await (0, git_1.commitWithRetry)(git_1.git, message);
-        }
-        catch (err) {
-            if (err instanceof errors_1.CommaitError) {
-                console.error(`commait: ${err.message}`);
-                process.exit(err.exitCode);
-            }
-            else {
-                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
-                process.exit(1);
-            }
-        }
     }
     // Pushing flow with auto and manual
     if (config.auto_push) {

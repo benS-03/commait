@@ -153,7 +153,7 @@ export async function commitWithRetry(
   delayMs = 500
 ): Promise<void> {
     const spinner = ora({
-            text: "Compressing diff below token budget",
+            text: "Commiting Locally",
             spinner: "flip",
             color: "green"
     }).start();

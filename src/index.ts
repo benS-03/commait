@@ -35,7 +35,6 @@ program.command("commit")
 .option('--dry-run', 'run without commit or pushing')
 .option('-e, --edit', 'edit message before commit')
 .option('-c, --context', 'allows addition of further context')
-.option('--strip-noise', 'strips noise files from diff')
 .option("--verbose", 'shows total token usage at end of commit')
 .action(async (options) => {
 
@@ -83,14 +82,6 @@ program.command("commit")
 
     //======= Pre Generation diff compression =======
     
-    // Option to force compression
-    if(options.stripNoise){
-        console.log(`diff length: ${diff.length}`)
-        const parsed = parseDiff(diff);
-        const stripped = stripNoiseFiles(parsed);
-        diff = diffFilesToString(stripped);
-        console.log(`diff lenght ${diff.length}`)
-    }
     //Compression
     let compressionLog: string[];
     try{
@@ -185,20 +176,6 @@ program.command("commit")
     //Editing of commmit
     if(options.edit){
         message = edit(message);
-    }
-    //Dry
-    if (!options.dryRun){
-        try {
-        await commitWithRetry(git, message);
-        }catch (err) {
-            if (err instanceof CommaitError) {
-                console.error(`commait: ${err.message}`);
-                process.exit(err.exitCode);
-            }else {
-                console.error(`commait: unexpected error — ${err instanceof Error ? err.message : String(err)}`);
-                process.exit(1);
-            }
-        }
     }
     // Pushing flow with auto and manual
     

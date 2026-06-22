@@ -152,7 +152,7 @@ async function stageAll() {
  --------------------------------------------------------------- */
 async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
     const spinner = (0, ora_1.default)({
-        text: "Compressing diff below token budget",
+        text: "Commiting Locally",
         spinner: "flip",
         color: "green"
     }).start();
