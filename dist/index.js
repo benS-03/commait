@@ -173,7 +173,7 @@ program.command("commit")
     //Dry
     if (!options.dryRun) {
         try {
-            (0, git_1.commitWithRetry)(git_1.git, message);
+            await (0, git_1.commitWithRetry)(git_1.git, message);
         }
         catch (err) {
             if (err instanceof errors_1.CommaitError) {

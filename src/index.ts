@@ -189,7 +189,7 @@ program.command("commit")
     //Dry
     if (!options.dryRun){
         try {
-        commitWithRetry(git, message);
+        await commitWithRetry(git, message);
         }catch (err) {
             if (err instanceof CommaitError) {
                 console.error(`commait: ${err.message}`);
