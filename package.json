@@ -1,5 +1,5 @@
 {
-  "name": "commait",
+  "name": "commait-cli",
   "version": "1.0.0",
   "description": "AI-powered git commit tool",
   "bin": {
@@ -18,12 +18,25 @@
     "type": "git",
     "url": "git+https://github.com/benS-03/commait.git"
   },
-  "keywords": [],
+  "keywords": [
+    "git",
+    "commit",
+    "commit-message",
+    "conventional-commits",
+    "ai",
+    "llm",
+    "openai",
+    "anthropic",
+    "ollama",
+    "cli",
+    "cli-tool",
+    "developer-tools"
+  ],
   "engines": {
     "node": ">=18"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/benS-03/commait/issues"
@@ -39,7 +52,7 @@
     "@inquirer/external-editor": "^3.0.3",
     "@types/inquirer": "^9.0.9",
     "commander": "^14.0.3",
-    "dotenv": "^16.6.1",
+    "dotenv": "^17.4.2",
     "inquirer": "^8.2.7",
     "openai": "^6.38.0",
     "ora": "^9.4.0",
