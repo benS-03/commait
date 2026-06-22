@@ -152,9 +152,15 @@ export async function commitWithRetry(
   retries = 3,
   delayMs = 500
 ): Promise<void> {
+    const spinner = ora({
+            text: "Compressing diff below token budget",
+            spinner: "flip",
+            color: "green"
+    }).start();
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await git.commit(message)
+      spinner.succeed("Changes Commed Locally.")
       return // success
     } catch (err: any) {
       const isLock = err.message.includes('index.lock') && err.message.includes('File exists')
@@ -162,13 +168,15 @@ export async function commitWithRetry(
       if (isLock && attempt < retries) {
         console.log(`⟳ Git locked, retrying (${attempt}/${retries})...`)
         await new Promise(res => setTimeout(res, delayMs))
-        continue
+        continue;
       }
 
       // not a lock error, or out of retries
       if (isLock) {
+        spinner.fail("Failed to commit locally");
         throw new GitError(`Git is locked by another process. Retried ${retries} times before exiting.`)
       } else {
+        spinner.fail("Failed to commit locally");
         throw new GitError(`Failed to commit: ${err.message}`)
       }
     }
@@ -181,9 +189,17 @@ export async function commitWithRetry(
  | returns: none
  --------------------------------------------------------------- */
 export async function pushChanges(remote: string) {
+    const spinner = ora({
+            text: "Compressing diff below token budget",
+            spinner: "flip",
+            color: "green"
+    }).start();
+
     try {
         await git.push(remote);
+        spinner.succeed("Changes Successfully Pushed")
     } catch (err: any) {
+        spinner.fail("Failed to push changes.")
         throw new GitError(`Failed to push changes: ${err.message}`);
     }
 }

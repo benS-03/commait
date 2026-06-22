@@ -1,10 +1,11 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk"
-require('dotenv').config();
+require('dotenv').config({ silent: true });
 import { encoding_for_model } from "tiktoken";
 import {loadConfig, CommaitConfig } from "./config";
 import {AiProviderError} from "./errors"
 
+process.env.DOTENVX_QUIET = 'true';
 
 export const MODEL_REGISTRY = {
     openai: [

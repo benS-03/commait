@@ -151,9 +151,15 @@ async function stageAll() {
  | returns: none
  --------------------------------------------------------------- */
 async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
+    const spinner = (0, ora_1.default)({
+        text: "Compressing diff below token budget",
+        spinner: "flip",
+        color: "green"
+    }).start();
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             await git.commit(message);
+            spinner.succeed("Changes Commed Locally.");
             return; // success
         }
         catch (err) {
@@ -165,9 +171,11 @@ async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
             }
             // not a lock error, or out of retries
             if (isLock) {
+                spinner.fail("Failed to commit locally");
                 throw new errors_1.GitError(`Git is locked by another process. Retried ${retries} times before exiting.`);
             }
             else {
+                spinner.fail("Failed to commit locally");
                 throw new errors_1.GitError(`Failed to commit: ${err.message}`);
             }
         }
@@ -179,10 +187,17 @@ async function commitWithRetry(git, message, retries = 3, delayMs = 500) {
  | returns: none
  --------------------------------------------------------------- */
 async function pushChanges(remote) {
+    const spinner = (0, ora_1.default)({
+        text: "Compressing diff below token budget",
+        spinner: "flip",
+        color: "green"
+    }).start();
     try {
         await exports.git.push(remote);
+        spinner.succeed("Changes Successfully Pushed");
     }
     catch (err) {
+        spinner.fail("Failed to push changes.");
         throw new errors_1.GitError(`Failed to push changes: ${err.message}`);
     }
 }

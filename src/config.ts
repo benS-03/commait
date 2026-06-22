@@ -1,7 +1,9 @@
+process.env.DOTENVX_QUIET = 'true';
+
 import path from "path";
 import os from "os";
 import fs from "fs";
-require('dotenv').config();
+require('dotenv').config({silent: true});
 import {commitMessagePrompt} from "./aiPrompt"
 import {DEFAULT_MODELS, MODEL_REGISTRY} from "./ai"
 import { getRemotes } from "./git";

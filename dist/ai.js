@@ -7,9 +7,10 @@ exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = ex
 exports.getProvider = getProvider;
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
-require('dotenv').config();
+require('dotenv').config({ silent: true });
 const tiktoken_1 = require("tiktoken");
 const errors_1 = require("./errors");
+process.env.DOTENVX_QUIET = 'true';
 exports.MODEL_REGISTRY = {
     openai: [
         "gpt-4.1-nano", // Ultra fast/cheap option
