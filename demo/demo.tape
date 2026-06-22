@@ -1,9 +1,8 @@
-# demo.tape
 Output dev/commait/demo/demo.gif
-Set FontSize 13
-Set Width 100
-Set Height 28
-Set Padding 10
+Set FontSize 12
+Set Width 120
+Set Height 30
+Set Padding 5
 Set TypingSpeed 60ms
 Set Theme Dracula
 
@@ -19,4 +18,3 @@ Show
 Type "commait commit"
 Enter
 Sleep 6000ms
-
