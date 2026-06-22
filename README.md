@@ -4,7 +4,6 @@
 
 ![commait demo](https://raw.githubusercontent.com/benS-03/commait/main/demo/demo.gif)
 
-*Placeholder for badges*
 
 > Writing good commit messages is not hard, but why do it if AI can do it faster and better. Commait reads a staged diff and writes one for you in seconds. Includes a compression algorithm to reduce diff tokens. 
 
