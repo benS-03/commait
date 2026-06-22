@@ -222,6 +222,7 @@ async function compressDiffToLimit(diff, limit, provider) {
         spinner.info(`${currentTok - limit} tokens over budget. Stripping Noise Files...`);
     }
     else {
+        spinner.succeed("Compression Successful");
         return { diff: diffFilesToString(files), log: log };
     }
     files = stripNoiseFiles(files);
@@ -231,6 +232,7 @@ async function compressDiffToLimit(diff, limit, provider) {
         spinner.info(`${currentTok - limit} tokens over budget. Stripping Headers...`);
     }
     else {
+        spinner.succeed("Compression Successful");
         return { diff: diffFilesToString(files), log: log };
     }
     files = stripHeader(files);
@@ -240,6 +242,7 @@ async function compressDiffToLimit(diff, limit, provider) {
         spinner.info(`${currentTok - limit} tokens over budget. Stripping Context Lines...`);
     }
     else {
+        spinner.succeed("Compression Successful");
         return { diff: diffFilesToString(files), log: log };
     }
     const Originalfiles = stripContextLines(files);
@@ -249,6 +252,7 @@ async function compressDiffToLimit(diff, limit, provider) {
         spinner.info(`${currentTok - limit} tokens over budget. Trimming Files Scaled to Limit...`);
     }
     else {
+        spinner.succeed("Compression Successful");
         return { diff: diffFilesToString(files), log: log };
     }
     let allocation = allocateLineLimits(files, limit, 15);
