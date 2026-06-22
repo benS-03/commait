@@ -5,12 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnthropicProvider = exports.OpenAIProvider = exports.DEFAULT_MODELS = exports.MODEL_REGISTRY = void 0;
 exports.getProvider = getProvider;
+process.env.DOTENVX_QUIET = 'true';
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 require('dotenv').config({ silent: true });
 const tiktoken_1 = require("tiktoken");
 const errors_1 = require("./errors");
-process.env.DOTENVX_QUIET = 'true';
+const ora_1 = __importDefault(require("ora"));
 exports.MODEL_REGISTRY = {
     openai: [
         "gpt-4.1-nano", // Ultra fast/cheap option
@@ -64,6 +65,11 @@ class OpenAIProvider {
     }
     async generateCommitMessage(diff, context = "") {
         let contextMessage = "";
+        const spinner = (0, ora_1.default)({
+            text: "Generating Commit message usin OpenAI. . .",
+            spinner: "flip",
+            color: "green"
+        }).start();
         if (context) {
             contextMessage = `Consider this user provided context ${context}\n`;
         }
@@ -80,9 +86,11 @@ class OpenAIProvider {
                     },
                 ],
             });
+            spinner.succeed("Message Generated");
             return res.choices[0].message.content ?? "";
         }
         catch (err) {
+            spinner.fail("Failed to Generate Message.");
             throw new errors_1.AiProviderError(`Error requesting OpenAi message generation: ${err.message}`);
         }
     }
@@ -132,6 +140,11 @@ class AnthropicProvider {
     }
     async generateCommitMessage(diff, context = "") {
         let contextMessage = "";
+        const spinner = (0, ora_1.default)({
+            text: "Generating Commit message using Anthropic. . .",
+            spinner: "flip",
+            color: "green"
+        }).start();
         if (context) {
             contextMessage = `Consider this user provided context ${context}\n`;
         }
@@ -149,8 +162,10 @@ class AnthropicProvider {
             });
         }
         catch (err) {
+            spinner.fail("Failed to generate message");
             throw new errors_1.AiProviderError(`Failed Anthropic message generation request: ${err.message}`);
         }
+        spinner.succeed("Commit Message Generated.");
         return res.content
             .filter((block) => block.type === "text")
             .map((block) => block.text)

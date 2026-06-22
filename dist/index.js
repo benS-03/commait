@@ -10,7 +10,6 @@ const config_1 = require("./config");
 const commander_1 = require("commander");
 const aiPrompt_1 = require("./aiPrompt");
 const commandPrompts_1 = require("./commandPrompts");
-const ora_1 = __importDefault(require("ora"));
 const external_editor_1 = require("@inquirer/external-editor");
 const package_json_1 = __importDefault(require("../package.json"));
 const errors_1 = require("./errors");
@@ -95,16 +94,10 @@ program.command("commit")
     }
     //fun comment
     // ======= Main commit loop =======
-    const spinner = (0, ora_1.default)({
-        text: "Generating Commit message. . .",
-        spinner: "flip",
-        color: "green"
-    });
     while (cont) {
         // Message generation with optional context
         if (options.context) {
             const context = await (0, commandPrompts_1.typePrompt)("Enter context for generation");
-            spinner.start();
             let message = "";
             try {
                 message = await provider.generateCommitMessage(diff, context);
@@ -119,10 +112,8 @@ program.command("commit")
                     process.exit(1);
                 }
             }
-            spinner.succeed("Commit Message Generated");
         }
         else {
-            spinner.start();
             try {
                 message = await provider.generateCommitMessage(diff);
             }
@@ -136,7 +127,6 @@ program.command("commit")
                     process.exit(1);
                 }
             }
-            spinner.succeed("Commit Message Generated");
         }
         // Token tracking and response loggin ( needs work)
         tokens += await provider.countInputTokens(diff);

@@ -1,11 +1,14 @@
+process.env.DOTENVX_QUIET = 'true';
+
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk"
 require('dotenv').config({ silent: true });
 import { encoding_for_model } from "tiktoken";
 import {loadConfig, CommaitConfig } from "./config";
 import {AiProviderError} from "./errors"
+import ora from "ora";
 
-process.env.DOTENVX_QUIET = 'true';
+
 
 export const MODEL_REGISTRY = {
     openai: [
@@ -72,6 +75,11 @@ export class OpenAIProvider implements AIProvider {
 
     async generateCommitMessage(diff: string, context: string = ""): Promise<string> {
         let contextMessage = "";
+        const spinner = ora({
+                text: "Generating Commit message usin OpenAI. . .",
+                spinner: "flip",
+                color: "green"
+        }).start();
         if (context){
             contextMessage = `Consider this user provided context ${context}\n`
         } 
@@ -88,8 +96,10 @@ export class OpenAIProvider implements AIProvider {
                 },
                 ],
             });
+            spinner.succeed("Message Generated");
             return res.choices[0].message.content ?? "";
         }catch (err: any){
+            spinner.fail("Failed to Generate Message.")
             throw new AiProviderError(`Error requesting OpenAi message generation: ${err.message}`);
         }
     }
@@ -149,6 +159,11 @@ export class AnthropicProvider implements AIProvider {
 
     async generateCommitMessage(diff: string, context: string = ""): Promise<string> {
         let contextMessage = "";
+        const spinner = ora({
+                text: "Generating Commit message using Anthropic. . .",
+                spinner: "flip",
+                color: "green"
+            }).start();
         if (context) {
             contextMessage = `Consider this user provided context ${context}\n`
         }
@@ -165,8 +180,10 @@ export class AnthropicProvider implements AIProvider {
                 ],
             });
         } catch (err: any){
+            spinner.fail("Failed to generate message");
             throw new AiProviderError(`Failed Anthropic message generation request: ${err.message}`);
         }
+        spinner.succeed("Commit Message Generated.")
         return res.content
         .filter((block) => block.type === "text")
         .map((block) => block.text)

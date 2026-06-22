@@ -109,18 +109,12 @@ program.command("commit")
     }
     //fun comment
     // ======= Main commit loop =======
-    const spinner = ora({
-        text: "Generating Commit message. . .",
-        spinner: "flip",
-        color: "green"
-    })
     while(cont) {
         // Message generation with optional context
 
         if (options.context){
 
             const context = await typePrompt("Enter context for generation");
-            spinner.start();
             let message: string = "";
 
             try {
@@ -134,10 +128,8 @@ program.command("commit")
                 process.exit(1);
             }
         }
-            spinner.succeed("Commit Message Generated")
         }
         else {
-            spinner.start();
             try {
             message = await provider.generateCommitMessage(diff);
             }catch (err) {
@@ -149,7 +141,6 @@ program.command("commit")
                     process.exit(1);
                 }
             }
-            spinner.succeed("Commit Message Generated")
 
         }
         // Token tracking and response loggin ( needs work)

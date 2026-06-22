@@ -160,7 +160,7 @@ export async function commitWithRetry(
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await git.commit(message)
-      spinner.succeed("Changes Commed Locally.")
+      spinner.succeed("Changes Commited Locally.")
       return // success
     } catch (err: any) {
       const isLock = err.message.includes('index.lock') && err.message.includes('File exists')
