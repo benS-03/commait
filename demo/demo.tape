@@ -13,4 +13,4 @@ Show
 
 Type "commait commit"
 Enter
-Sleep 8000ms
+Sleep 10000ms

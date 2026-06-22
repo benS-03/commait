@@ -1,8 +1,8 @@
 # Commait
-```AI-generated commit messages, built to save on tokens and time```
+```AI-generated commit messages, built to save on tokens and time.```
 
 
-*Placeholder for demo gif*
+![commait demo](https://raw.githubusercontent.com/benS-03/commait/main/demo/demo.gif)
 
 *Placeholder for badges*
 
@@ -36,12 +36,12 @@ To commit staged changes, run:
 $commait commit
 ```
 
-This will generate a message, then either prompt you with options or skip prompts based on config.
+This will generate a message, commit, and push to remote all in one command. It will either prompt you with options or skip prompts based on config.
 
 ## Features
-
+- **One-command workflow** — Generate, commit, and push changes with a single command.
 - **Multi-provider support** — Generate messages using OpenAI or Anthropic with a simple config change.
-- **Fully configurable automation** — Dial in exactly how hands-off you want it: auto-stage changes, auto-commit the generated message, auto-push to your remote — or keep every step interactive with prompts.
+- **Fully configurable automation** — Dial in exactly how hands-off you want it: auto-stage changes, auto-commit the generated message, auto-push to your remote, or keep every step interactive with prompts.
 - **Token budget control** — Cap the max diff tokens sent per request, so generation cost stays predictable even on large diffs.
 - **Diff compression pipeline** — If token budget exceeded by raw diff, a custom staged compression pipeline runs, checking the tokens against the budget at each stage to reduce information loss as much as possible while still getting below budget. See compression section for more details.
 - **Custom prompts** — Override the default prompt template to match your team's commit conventions or personal style.
