@@ -190,7 +190,7 @@ export async function commitWithRetry(
  --------------------------------------------------------------- */
 export async function pushChanges(remote: string) {
     const spinner = ora({
-            text: "Compressing diff below token budget",
+            text: "Pushing Local Commit",
             spinner: "flip",
             color: "green"
     }).start();
