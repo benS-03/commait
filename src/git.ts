@@ -4,6 +4,7 @@ import simpleGit from "simple-git";
 export const git = simpleGit();
 import {AIProvider} from "./ai"
 import { DiffCompressionError, GitError } from "./errors"
+import ora from "ora";
 
 const AVG_TOKENS_PER_LINE: number = 10;
 const MAX_TRIM_ITERATIONS: number = 6;
@@ -215,10 +216,15 @@ export async function compressDiffToLimit(
     const log: string[] = [];
     let files: DiffFile[] = parseDiff(diff);
 
+    const spinner = ora({
+            text: "Compressing diff below token budget",
+            spinner: "flip",
+            color: "green"
+    }).start();
     //Strip Noise Files
     let currentTok = await provider.countInputTokens(diffFilesToString(files));
     if (currentTok > limit) {
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nStripping Noise Files...`);
+        spinner.info(`${currentTok-limit} tokens over budget. Stripping Noise Files...`);
     } else {
         return {diff: diffFilesToString(files), log: log};
     }
@@ -227,7 +233,7 @@ export async function compressDiffToLimit(
 
     //Strip Header
     if (currentTok > limit) {
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nStripping Headers...`);
+        spinner.info(`${currentTok-limit} tokens over budget. Stripping Headers...`);
     } else {
         return {diff: diffFilesToString(files), log: log};
     }
@@ -236,7 +242,7 @@ export async function compressDiffToLimit(
 
     //Strip Context
     if (currentTok > limit) {
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nStripping Context Lines...`);
+        spinner.info(`${currentTok-limit} tokens over budget. Stripping Context Lines...`);
     } else {
         return {diff: diffFilesToString(files), log: log};
     }
@@ -245,7 +251,7 @@ export async function compressDiffToLimit(
 
     //StripLines
     if (currentTok > limit) {
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nTrimming Files Scaled to Limit...`);
+        spinner.info(`${currentTok-limit} tokens over budget. Trimming Files Scaled to Limit...`);
     } else {
         return {diff: diffFilesToString(files), log: log};
     }
@@ -262,7 +268,7 @@ export async function compressDiffToLimit(
         const excess = currentTok - limit;
         if (excess >= lastExcess) break;
         lastExcess = excess;
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit\nTrimming Files More...`);
+        spinner.info(`${currentTok-limit} tokens over budget. Trimming Files More...`);
         trimLimit*=.7;
         allocation = allocateLineLimits(files, trimLimit, 5);
         files = stripLines(Originalfiles, allocation)
@@ -271,9 +277,10 @@ export async function compressDiffToLimit(
 
     // Final Return Or Throw
     if (currentTok > limit) {
-        console.log(`Diff is ${currentTok-limit} tokens greater than token limit`);
+        spinner.fail(`Compression Failed`);
         throw new DiffCompressionError("Unable to compress diff below limit with supported methods.")
     } else {
+        spinner.succeed("Compression Successful");
         return {diff: diffFilesToString(files), log: log};
     }
     
