@@ -42,16 +42,16 @@ $commait commit
 This will generate a message, commit, and push to remote all in one command. It will either prompt you with options or skip prompts based on config.
 
 ## Features
-- **One-command workflow** — Generate, commit, and push changes with a single command.
-- **Multi-provider support** — Generate messages using OpenAI or Anthropic with a simple config change.
-- **Fully configurable automation** — Dial in exactly how hands-off you want it: auto-stage changes, auto-commit the generated message, auto-push to your remote, or keep every step interactive with prompts.
-- **Token budget control** — Cap the max diff tokens sent per request, so generation cost stays predictable even on large diffs.
-- **Diff compression pipeline** — If token budget exceeded by raw diff, a custom staged compression pipeline runs, checking the tokens against the budget at each stage to reduce information loss as much as possible while still getting below budget. See compression section for more details.
-- **Custom prompts** — Override the default prompt template to match your team's commit conventions or personal style.
+- **One-command workflow**: Generate, commit, and push changes with a single command.
+- **Multi-provider support**: Generate messages using OpenAI or Anthropic with a simple config change.
+- **Fully configurable automation**: Dial in exactly how hands-off you want it: auto-stage changes, auto-commit the generated message, auto-push to your remote, or keep every step interactive with prompts.
+- **Token budget control**: Cap the max diff tokens sent per request, so generation cost stays predictable even on large diffs.
+- **Diff compression pipeline**: If token budget exceeded by raw diff, a custom staged compression pipeline runs, checking the tokens against the budget at each stage to reduce information loss as much as possible while still getting below budget. See compression section for more details.
+- **Custom prompts**: Override the default prompt template to match your team's commit conventions or personal style.
 - **Optional Context**: Prompt can be prefixed with custom context line using -c flag with committing.
-- **Interactive model picker** — Browse and select models within your chosen provider without needing to memorize exact model name strings.
+- **Interactive model picker**: Browse and select models within your chosen provider without needing to memorize exact model name strings.
 
-- **Configurable remotes** — Set a default push target, or get prompted for which remote to use on every commit.
+- **Configurable remotes**: Set a default push target, or get prompted for which remote to use on every commit.
 
 ## Configuration 
 
