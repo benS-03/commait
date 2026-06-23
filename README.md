@@ -4,13 +4,17 @@
 
 ![commait demo](https://raw.githubusercontent.com/benS-03/commait/main/demo/demo.gif)
 
+[![npm version](https://img.shields.io/npm/v/commait-cli)](https://www.npmjs.com/package/commait-cli)
+[![downloads](https://img.shields.io/npm/dw/commait-cli)](https://www.npmjs.com/package/commait-cli)
+[![license](https://img.shields.io/npm/l/commait-cli)](https://github.com/benS-03/commait/blob/main/LICENSE)
+[![node version](https://img.shields.io/node/v/commait-cli)](https://www.npmjs.com/package/commait)
 
 > Writing good commit messages is not hard, but why do it if AI can do it faster and better. Commait reads a staged diff and writes one for you in seconds. Includes a compression algorithm to reduce diff tokens. 
 
 ## Install 
 
 ```
-$npm install commait-cli
+$npm install commait
 ```
 
 ## Quick Start
