@@ -10,7 +10,7 @@
 ## Install 
 
 ```
-$npm install commait
+$npm install commait-cli
 ```
 
 ## Quick Start
